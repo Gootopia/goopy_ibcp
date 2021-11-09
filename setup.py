@@ -7,7 +7,7 @@ author='goo',
 install_requires=['loguru', 
                   'overrides', 
                   'websockets', 
-                  'requests'
+                  'requests',
                   'urllib3'],
 author_email='',
 packages=setuptools.find_packages(),
