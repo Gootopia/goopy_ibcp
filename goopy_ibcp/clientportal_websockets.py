@@ -6,7 +6,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from goopy_certificate import Certificate, CertificateError
+from goopy_certificate.certificate import Certificate, CertificateError
 
 
 class ClientPortalWebsocketsError(Enum):

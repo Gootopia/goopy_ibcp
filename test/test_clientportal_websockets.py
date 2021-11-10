@@ -2,9 +2,7 @@ import pytest
 from unittest.mock import patch
 
 from goopy_certificate.certificate import CertificateError, CertificateReturn
-from clientportal_websockets import ClientPortalWebsocketsBase
-from clientportal_websockets import ClientPortalWebsocketsError
-
+from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase, ClientPortalWebsocketsError
 
 @patch('ib.clientportal_websockets.Certificate.get_certificate')
 class TestClientPortalWebsockets:

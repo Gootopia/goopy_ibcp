@@ -1,7 +1,7 @@
 from overrides import overrides
 from loguru import logger
 
-from endpoints import Endpoints
+from goopy_ibcp.endpoints import Endpoints
 from httpendpoints import HttpEndpoints
 
 
