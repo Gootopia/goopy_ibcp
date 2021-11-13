@@ -2,8 +2,7 @@ from overrides import overrides
 from loguru import logger
 
 from goopy_ibcp.endpoints import Endpoints
-from httpendpoints import HttpEndpoints
-
+from goopy_ibcp.httpendpoints import HttpEndpoints
 
 class ClientPortalHttp(HttpEndpoints):
     # TODO: Document ClientPortalHttp class

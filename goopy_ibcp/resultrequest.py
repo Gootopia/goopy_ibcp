@@ -1,6 +1,4 @@
-# Response message from IB client requests
-from error import Error
-
+from goopy_ibcp.error import Error
 
 class RequestResult:
     # Decoded message for error
