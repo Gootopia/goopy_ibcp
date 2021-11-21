@@ -23,7 +23,7 @@ class HttpEndpoints(Watchdog):
 
         # gateway base URL for submitting all client portal API. All commands append to this string
         self.url_http = ''
-        self.request_timeout_sec = 10
+        self.request_timeout_sec = 30
 
         if disable_request_warnings:
             urllib3.disable_warnings()
