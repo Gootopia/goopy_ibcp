@@ -6,15 +6,13 @@ from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
 import time
 
 # http for standard requests (placing orders, etc.)
-client_http = ClientPortalHttp(min_ping_interval_sec=5)
-
-time.sleep(5000)
-
-print("DONE!")
-#r = client_http.clientrequest_authentication_status()
+client_http = ClientPortalHttp(min_ping_interval_sec=30)
+r = client_http.clientrequest_authentication_status()
 
 # websocket for quote data
-# client_ws = ClientPortalWebsocketsBase()
+client_ws = ClientPortalWebsocketsBase()
 
-#r = client_http.clientrequest_authentication_status()
-# r = client_ws.loop()
+r = client_http.clientrequest_authentication_status()
+
+# loop forever in the client. Normally you do this in a worker thread as it runs perpetually to process messages
+client_ws.loop()
