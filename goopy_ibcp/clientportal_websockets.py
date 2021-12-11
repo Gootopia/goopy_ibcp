@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+import socket
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
@@ -7,7 +8,6 @@ from pathlib import Path
 from loguru import logger
 
 from goopy_certificate.certificate import Certificate, CertificateError
-
 
 class ClientPortalWebsocketsError(Enum):
     Ok = 0
@@ -26,11 +26,12 @@ class ClientPortalWebsocketsBase:
     """
     def __init__(self):
         # Base used by all IB websocket endpoints
-        self.url = 'wss://localhost:5000/v1/api/ws'
+        self.url_ib_wss = 'wss://localhost:5000/v1/api/ws'
         self.connection = None
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
-        logger.log('DEBUG', f'Clientportal (Websockets) Started with endpoint: {self.url}')
+        logger.log('DEBUG', f'Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}')
+        
 
     def loop(self):
         """ Start websocket message handler and heartbeat """
@@ -45,11 +46,11 @@ class ClientPortalWebsocketsBase:
             pass
 
     def on_connection(self, msg):
-        """ Websocket connection opened """
+        """ Websocket connection opened. Override as required """
         pass
 
     def on_message(self, msg):
-        """ Websocket message received """
+        """ Websocket message received. Override as required """
         pass
 
     async def __open_connection(self, url='', url_validator=None):
@@ -72,14 +73,17 @@ class ClientPortalWebsocketsBase:
                 return ClientPortalWebsocketsError.Invalid_Certificate
 
         try:
-            logger.log('DEBUG', f'Connection: Opening "{self.url}"')
-            self.connection = await websockets.connect(self.url, ssl=result.ssl_context)
-            logger.log('DEBUG', f'Connection: Established "{self.url}"')
+            logger.log('DEBUG', f'Connection: Opening "{url}"')
+
+            self.connection = await websockets.connect(url, ssl=result.ssl_context)
+            logger.log('DEBUG', f'Connection: Established "{url}"')
             ret_code = ClientPortalWebsocketsError.Ok
 
             # Once connection is achieved, IB provides confirmation message with username
             connect_msg = await self.connection.recv()
             logger.log('DEBUG', f'Connection: Confirmation {connect_msg}')
+
+            # additional external handling if overridden
             self.on_connection(connect_msg)
 
         except websockets.WebSocketException as e:
@@ -117,6 +121,7 @@ class ClientPortalWebsocketsBase:
             try:
                 while True:
                     await self.connection.send('tic')
+                    logger.log('DEBUG', f'Websocket: Heartbeat {self.heartbeat_sec}s')
                     await asyncio.sleep(self.heartbeat_sec)
 
             except Exception as e:
@@ -127,11 +132,12 @@ class ClientPortalWebsocketsBase:
 
     async def __async_loop(self):
         try:
-            task_connection = asyncio.create_task(self.__open_connection())
+            task_connection = asyncio.create_task(self.__open_connection(url=self.url_ib_wss))
             # msg_handler and heartbeat depend on opening a valid connection
             ret = await task_connection
             if ret == ClientPortalWebsocketsError.Ok:
-                status = await asyncio.gather(self.__websocket_msg_handler(), self.__websocket_heartbeat())
+                #status = await asyncio.gather(self.__websocket_msg_handler(), self.__websocket_heartbeat())
+                status = await asyncio.gather(self.__websocket_msg_handler())
 
         except Exception as e:
             logger.log('DEBUG', f'EXCEPTION: {e}')

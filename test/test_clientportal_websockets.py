@@ -6,7 +6,7 @@ from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase, Clien
 
 # TODO: Fix all the patch definitions following
 
-@patch('ib.clientportal_websockets.Certificate.get_certificate')
+@patch('goopy_ibcp.clientportal_websockets.Certificate.get_certificate')
 class TestClientPortalWebsockets:
     @staticmethod
     def url_validator_ok(url=''):
