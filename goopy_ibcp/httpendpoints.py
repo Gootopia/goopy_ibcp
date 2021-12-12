@@ -1,6 +1,6 @@
 import requests
 import urllib3
-
+import json
 from loguru import logger
 
 from goopy_misc.watchdog import Watchdog
@@ -17,9 +17,9 @@ class HttpEndpoints(Watchdog):
     # used for JSON GET/POST requests
     headers = {'accept': 'application/json'}
 
-    def __init__(self, name='Unknown', timeout_sec=5, autostart=True, disable_request_warnings=True):
+    def __init__(self, name='Unknown', timeout_sec=5, watchdog_start=True, disable_request_warnings=True):
         # kick off the watchdog
-        super().__init__(name=name, timeout_sec=timeout_sec, autostart=autostart)
+        super().__init__(name=name, timeout_sec=timeout_sec, autostart=watchdog_start)
 
         # gateway base URL for submitting all client portal API. All commands append to this string
         self.url_http = ''
@@ -35,9 +35,9 @@ class HttpEndpoints(Watchdog):
         logger.log('DEBUG', f'GET({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
         return result
 
-    def clientrequest_post(self, endpoint=''):
+    def clientrequest_post(self, endpoint='', params=None):
         """ Gateway Post message request using desired endpoint."""
-        cpurl, resp, exception = self.__post(endpoint)
+        cpurl, resp, exception = self.__post(endpoint, params=params)
         result = self.__error_check(cpurl, resp, exception)
         logger.log('DEBUG', f'POST({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
         return result
@@ -66,7 +66,7 @@ class HttpEndpoints(Watchdog):
         # TODO: Refactor to use dataclass
         return cpurl, resp, resp_exception
 
-    def __post(self, endpoint: str = '', data: str = ''):
+    def __post(self, endpoint: str = '', params=None):
         cpurl = self.__build_endpoint_url(endpoint)
         resp = None
         resp_exception = None
@@ -76,8 +76,8 @@ class HttpEndpoints(Watchdog):
         # See https://stackoverflow.com/questions/10667960/python-requests-throwing-sslerror
         # resp is the web response. Use resp.json() to get the client request specific response
         try:
-            resp = requests.post(cpurl, headers=HttpEndpoints.headers,
-                                 json=data, verify=False, timeout=self.request_timeout_sec)
+            resp = requests.post(cpurl, headers=HttpEndpoints.headers, params=params,
+                                 verify=False, timeout=self.request_timeout_sec)
 
         # any exceptions will be passed off to __error_check for handling
         except Exception as e:

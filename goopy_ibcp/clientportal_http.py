@@ -12,16 +12,16 @@ class ClientPortalHttp(HttpEndpoints):
     Swagger can be used to test client requests: https://interactivebrokers.github.io/cpwebapi/swagger-ui.html
     Consult curl.trillworks.com for conversion of curl commands to Python requests
     """
-    def __init__(self, min_ping_interval_sec=60):
+    def __init__(self, watchdog_start=True, min_ping_interval_sec=60):
         # NOTE: The ping interval will be longer than specified depending on how long the http request takes to complete
-        super().__init__(autostart=False, timeout_sec=min_ping_interval_sec, name='IB_HTTP')
+        super().__init__(watchdog_start=watchdog_start, timeout_sec=min_ping_interval_sec, name='IB_HTTP')
         self.name = 'HTTP'
         # Base used by all endpoints
         self.url_http = 'https://localhost:5000/v1/portal'
         logger.log('DEBUG', f'Clientportal (HTTP) Started with gateway: {self.url_http}')
 
         # need to set autostart=False and call after we've defined url_http or we get exceptions due to the watchdog running before things are ready
-        super().start()
+        #super().start()
 
     @overrides
     def watchdog_task(self):
@@ -54,6 +54,10 @@ class ClientPortalHttp(HttpEndpoints):
         """ Get list of accessible trading accounts."""
         return self.clientrequest_get(Endpoints.BrokerageAccounts.value)
 
+    def clientrequest_search(self, symbol):
+        """ Get a list"""
+        params = {"symbol" : symbol, "name": False, "secType": "STK"}
+        return self.clientrequest_post(Endpoints.Search.value, params=params)
 
 if __name__ == '__main__':
     print("=== IB Client Portal (HTTP) ===")

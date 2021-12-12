@@ -13,5 +13,8 @@ class Endpoints(Enum):
     # TRADE ENDPOINTS
     Trades = '/iserver/account/trades'
 
+    # CONTRACT/SEARCH ENDPOINTS
+    Search = '/iserver/secdef/search'
+
     # ACCOUNT ENDPOINTS
     BrokerageAccounts = '/iserver/accounts'

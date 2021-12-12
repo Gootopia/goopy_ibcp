@@ -1,11 +1,9 @@
 import asyncio
 import websockets
-import socket
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from pathlib import Path
-
 from loguru import logger
+import json
 
 from goopy_certificate.certificate import Certificate, CertificateError
 
@@ -28,11 +26,11 @@ class ClientPortalWebsocketsBase:
         # Base used by all IB websocket endpoints
         self.url_ib_wss = 'wss://localhost:5000/v1/api/ws'
         self.connection = None
+        self.sslcontext = None
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
         logger.log('DEBUG', f'Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}')
         
-
     def loop(self):
         """ Start websocket message handler and heartbeat """
         try:
@@ -86,6 +84,9 @@ class ClientPortalWebsocketsBase:
             # additional external handling if overridden
             self.on_connection(connect_msg)
 
+            # save off this context for use by other handlers since it was used successfully already
+            self.sslcontext = result.ssl_context
+
         except websockets.WebSocketException as e:
             logger.log('DEBUG', f'EXCEPTION: Websockets {e}')
             ret_code = ClientPortalWebsocketsError.Connection_Failed
@@ -98,21 +99,25 @@ class ClientPortalWebsocketsBase:
             return ret_code
 
     async def __websocket_msg_handler(self):
-        if self.connection is not None:
-            logger.log('DEBUG', f'Websocket: Start message handler')
+        logger.log('DEBUG', f'Websocket: Start message handler')
+
+        async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
             try:
-                while True:
-                    msg = await self.connection.recv()
+                async for msg in ws:
                     logger.log('DEBUG', f'Websocket: Received {msg}')
+            
+            except websockets.ConnectionClosed:
+                logger.log('DEBUG', f'Websocket: Connection closed. Re-opening.')
+                continue
 
             except Exception as e:
                 logger.log('DEBUG', f'EXCEPTION: {e}')
 
             finally:
-                logger.log('DEBUG', f'Websocket: Exited message handler')
+                pass
 
-        else:
-            logger.log('DEBUG', f'Websocket: Handler has no valid connection')
+
+        logger.log('DEBUG', f'Websocket: Exited message handler. Restarting.')
 
     async def __websocket_heartbeat(self):
         if self.connection is not None:
@@ -130,14 +135,26 @@ class ClientPortalWebsocketsBase:
             finally:
                 logger.log('DEBUG', f'Exited websocket heartbeat')
 
+    async def __websocket_reqdata(self):
+        async with websockets.connect(self.url_ib_wss, ssl=self.sslcontext) as ws:
+            #await asyncio.sleep(10)
+            logger.log('DEBUG', f'Requesting Data!')
+            #await ws.send('smh+265598+{"exchange":"ISLAND","period":"2h","bar":"5min","outsideRth":false,"source":"t","format":"%h/%l"}')
+            #await ws.send('smd+265598+{"fields":["31","83"]}')
+            async for msg in ws:
+                msg_json = json.loads(msg)
+                print(f"Topic={msg_json['topic']}")    
+                logger.log('DEBUG', f'Websocket: Received {msg}, remaining={len(ws.messages)}')
+            logger.log('DEBUG', f'Data messages complete')
+        logger.log('DEBUG', f'Exiting ReqData')
+
     async def __async_loop(self):
         try:
-            task_connection = asyncio.create_task(self.__open_connection(url=self.url_ib_wss))
-            # msg_handler and heartbeat depend on opening a valid connection
-            ret = await task_connection
+            #task_connection = asyncio.create_task(self.__open_connection(url=self.url_ib_wss))
+            #ret = await task_connection
+            ret = await self.__open_connection(url=self.url_ib_wss)
             if ret == ClientPortalWebsocketsError.Ok:
-                #status = await asyncio.gather(self.__websocket_msg_handler(), self.__websocket_heartbeat())
-                status = await asyncio.gather(self.__websocket_msg_handler())
+                await asyncio.gather(self.__websocket_msg_handler(), self.__websocket_reqdata())
 
         except Exception as e:
             logger.log('DEBUG', f'EXCEPTION: {e}')
