@@ -4,6 +4,7 @@ from loguru import logger
 from goopy_ibcp.endpoints import Endpoints
 from goopy_ibcp.httpendpoints import HttpEndpoints
 
+
 class ClientPortalHttp(HttpEndpoints):
     # TODO: Document ClientPortalHttp class
     """
@@ -55,9 +56,22 @@ class ClientPortalHttp(HttpEndpoints):
         return self.clientrequest_get(Endpoints.BrokerageAccounts.value)
 
     def clientrequest_search(self, symbol):
-        """ Get a list"""
-        params = {"symbol" : symbol, "name": False, "secType": "STK"}
+        """ Get a list of instruments by symbol or name
+        Parameters:
+            symbol:str = symbol or name
+        """
+        # NOTE: There is also a secType field which only currently supports 'STK'
+        # It doesn't appear to do anything and doesn't fail if it's not passed, so we leave it off for now
+        params = {"symbol" : symbol, "name": False}
         return self.clientrequest_post(Endpoints.Search.value, params=params)
+
+    def clientrequest_search_futures(self, symbols):
+        """ Get a list of futures based on symbol
+        Parameters:
+            symbol:str = comma separated list of case-sensitive futures symbols
+        """
+        params = {"symbols" : symbols}
+        return self.clientrequest_post(Endpoints.Search_Futures.value, params=params)
 
 if __name__ == '__main__':
     print("=== IB Client Portal (HTTP) ===")

@@ -14,8 +14,9 @@ client_http.clientrequest_reauthenticate()
 client_http.clientrequest_validate()
 client_http.clientrequest_authentication_status()
 
-r=client_http.clientrequest_search("FB")
-print(r)
+# Example call to search by name or symbol
+msft_list=client_http.clientrequest_search("Microsoft")
+es_list=client_http.clientrequest_search("ES")
 
 # websocket for quote data
 client_ws = ClientPortalWebsocketsBase()
