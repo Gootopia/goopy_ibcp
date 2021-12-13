@@ -102,6 +102,7 @@ class ClientPortalWebsocketsBase:
         logger.log('DEBUG', f'Websocket: Start message handler')
 
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
+            self.connection = ws
             try:
                 async for msg in ws:
                     logger.log('DEBUG', f'Websocket: Received {msg}')
@@ -115,7 +116,6 @@ class ClientPortalWebsocketsBase:
 
             finally:
                 pass
-
 
         logger.log('DEBUG', f'Websocket: Exited message handler. Restarting.')
 
@@ -136,22 +136,13 @@ class ClientPortalWebsocketsBase:
                 logger.log('DEBUG', f'Exited websocket heartbeat')
 
     async def __websocket_reqdata(self):
-        async with websockets.connect(self.url_ib_wss, ssl=self.sslcontext) as ws:
-            #await asyncio.sleep(10)
-            logger.log('DEBUG', f'Requesting Data!')
-            #await ws.send('smh+265598+{"exchange":"ISLAND","period":"2h","bar":"5min","outsideRth":false,"source":"t","format":"%h/%l"}')
-            #await ws.send('smd+265598+{"fields":["31","83"]}')
-            async for msg in ws:
-                msg_json = json.loads(msg)
-                print(f"Topic={msg_json['topic']}")    
-                logger.log('DEBUG', f'Websocket: Received {msg}, remaining={len(ws.messages)}')
-            logger.log('DEBUG', f'Data messages complete')
+        await asyncio.sleep(15)
+        logger.log('DEBUG', f'Requesting Data!')
+        await self.connection.send('smd+461318816+{"fields":["31"]}')
         logger.log('DEBUG', f'Exiting ReqData')
 
     async def __async_loop(self):
         try:
-            #task_connection = asyncio.create_task(self.__open_connection(url=self.url_ib_wss))
-            #ret = await task_connection
             ret = await self.__open_connection(url=self.url_ib_wss)
             if ret == ClientPortalWebsocketsError.Ok:
                 await asyncio.gather(self.__websocket_msg_handler(), self.__websocket_reqdata())

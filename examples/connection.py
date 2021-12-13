@@ -1,8 +1,9 @@
 """
-Simple test script to verify setup is running with IB
+Simple example test script for connecting and subscribing to data
 """
 from goopy_ibcp.clientportal_http import ClientPortalHttp
 from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
+import json
 
 """
 Interfacing with the IB Client Portal:
@@ -15,8 +16,8 @@ client_http.clientrequest_validate()
 client_http.clientrequest_authentication_status()
 
 # Example call to search by name or symbol
-msft_list=client_http.clientrequest_search("Microsoft")
-es_list=client_http.clientrequest_search("ES")
+secdef=client_http.clientrequest_search("ES")
+print(secdef.json[0])
 
 # websocket for quote data
 client_ws = ClientPortalWebsocketsBase()
