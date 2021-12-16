@@ -28,9 +28,9 @@ class HttpEndpoints(Watchdog):
         if disable_request_warnings:
             urllib3.disable_warnings()
 
-    def clientrequest_get(self, endpoint=''):
+    def clientrequest_get(self, endpoint='', params=None):
         """ Gateway Get message request using desired endpoint. """
-        cpurl, resp, exception = self.__get(endpoint)
+        cpurl, resp, exception = self.__get(endpoint, params=params)
         result = self.__error_check(cpurl, resp, exception)
         logger.log('DEBUG', f'GET({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
         return result
@@ -46,7 +46,7 @@ class HttpEndpoints(Watchdog):
         url = self.url_http + endpoint
         return url
 
-    def __get(self, endpoint: str = ''):
+    def __get(self, endpoint: str = '', params=None):
         cpurl = self.__build_endpoint_url(endpoint)
         resp = None
         resp_exception = None
@@ -56,7 +56,8 @@ class HttpEndpoints(Watchdog):
         # resp is the web response. Use resp.json() to get the client request specific response
         # resp = requests.post(cpurl, headers=self.headers, json=data, verify=False)
         try:
-            resp = requests.get(cpurl, headers=HttpEndpoints.headers, verify=False, timeout=self.request_timeout_sec)
+            resp = requests.get(cpurl, headers=HttpEndpoints.headers, params=params,
+                                verify=False, timeout=self.request_timeout_sec)
 
         # Any exceptions and return will be passed off to __error_check for handling
         except Exception as e:

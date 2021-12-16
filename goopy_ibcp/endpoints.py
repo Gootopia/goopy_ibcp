@@ -10,6 +10,7 @@ class Endpoints(Enum):
     AuthenticationStatus = '/iserver/auth/status'
     Reauthenticate = '/iserver/reauthenticate'
     Validate = '/sso/validate'
+    
     # TRADE ENDPOINTS
     Trades = '/iserver/account/trades'
 
@@ -19,3 +20,7 @@ class Endpoints(Enum):
 
     # ACCOUNT ENDPOINTS
     BrokerageAccounts = '/iserver/accounts'
+
+    # MARKET DATA
+    Market_Data = '/iserver/marketdata/snapshot'
+    Market_Data_History = '/iserver/marketdata/history'

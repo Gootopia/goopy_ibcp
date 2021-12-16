@@ -73,5 +73,23 @@ class ClientPortalHttp(HttpEndpoints):
         params = {"symbols" : symbols}
         return self.clientrequest_post(Endpoints.Search_Futures.value, params=params)
 
+    def clientrequest_marketdata(self, conids:str, fields:str="31"):
+        """ Request a snapshot of market data
+        Parameters:
+            conids:str = comma separated list of instrument conids
+            fields:str = comma separated list of field codes (see IB docs)
+        """
+        params = {"conids" : conids, "fields" : fields}
+        return self.clientrequest_get(Endpoints.Market_Data.value, params=params)
+
+    def clientrequest_marketdata_history(self, conids:str, period="1min"):
+        """ Request a snapshot of market data
+        Parameters:
+            conids:str = comma separated list of instrument conids
+            fields:str = comma separated list of field codes (see IB docs)
+        """
+        params = {"conid" : conids, "period" : period}
+        return self.clientrequest_get(Endpoints.Market_Data_History.value, params=params)
+
 if __name__ == '__main__':
     print("=== IB Client Portal (HTTP) ===")

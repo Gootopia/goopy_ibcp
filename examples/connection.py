@@ -3,7 +3,7 @@ Simple example test script for connecting and subscribing to data
 """
 from goopy_ibcp.clientportal_http import ClientPortalHttp
 from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
-import json
+import time
 
 """
 Interfacing with the IB Client Portal:
@@ -19,7 +19,20 @@ client_http.clientrequest_authentication_status()
 secdef=client_http.clientrequest_search("ES")
 print(secdef.json[0])
 
-# websocket for quote data
+# Get a tick snapshot of instruments (HTTP-based)
+client_http.clientrequest_marketdata("461318816")
+
+# Get historical data (HTTP-based)
+client_http.clientrequest_marketdata_history("461318816")
+time.sleep(5)
+client_http.clientrequest_marketdata_history("461318816")
+time.sleep(5)
+client_http.clientrequest_marketdata_history("461318816")
+time.sleep(5)
+client_http.clientrequest_marketdata_history("461318816")
+time.sleep(5)
+
+# Streaming data subscription (Websocket-based)
 client_ws = ClientPortalWebsocketsBase()
 
 try:
