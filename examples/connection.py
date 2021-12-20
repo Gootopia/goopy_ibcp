@@ -17,19 +17,20 @@ client_http.clientrequest_authentication_status()
 
 # Example call to search by name or symbol
 secdef=client_http.clientrequest_search("ES")
-print(secdef.json[0])
+#print(secdef.json[0])
 
+conid="461318816"
 # Get a tick snapshot of instruments (HTTP-based)
-client_http.clientrequest_marketdata("461318816")
+client_http.clientrequest_marketdata(conid)
 
 # Get historical data (HTTP-based)
-client_http.clientrequest_marketdata_history("461318816")
+client_http.clientrequest_marketdata(conid)
 time.sleep(5)
-client_http.clientrequest_marketdata_history("461318816")
+client_http.clientrequest_marketdata(conid)
 time.sleep(5)
-client_http.clientrequest_marketdata_history("461318816")
+client_http.clientrequest_marketdata(conid)
 time.sleep(5)
-client_http.clientrequest_marketdata_history("461318816")
+client_http.clientrequest_marketdata(conid)
 time.sleep(5)
 
 # Streaming data subscription (Websocket-based)

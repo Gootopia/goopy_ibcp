@@ -19,6 +19,7 @@ class ClientPortalHttp(HttpEndpoints):
         self.name = 'HTTP'
         # Base used by all endpoints
         self.url_http = 'https://localhost:5000/v1/portal'
+        #self.url_http = 'https://localhost:5000/v1/api'
         logger.log('DEBUG', f'Clientportal (HTTP) Started with gateway: {self.url_http}')
 
         # need to set autostart=False and call after we've defined url_http or we get exceptions due to the watchdog running before things are ready

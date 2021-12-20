@@ -29,6 +29,7 @@ class ClientPortalWebsocketsBase:
         self.sslcontext = None
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
+        self.data_subscribers = []
         logger.log('DEBUG', f'Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}')
         
     def loop(self):
@@ -103,12 +104,19 @@ class ClientPortalWebsocketsBase:
 
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
             self.connection = ws
+            if len(self.data_subscribers) > 0:
+                logger.log('DEBUG', f'Websocket: Adding subscribers')
+                for conid in self.data_subscribers:
+                    subscriber_msg=f'smd+{conid}+{"fields":["31"]}'
+                    await self.connection.send(subscriber_msg)
+                    logger.log('DEBUG', f'Websocket: Subscribing to {conid}')
+
             try:
                 async for msg in ws:
                     logger.log('DEBUG', f'Websocket: Received {msg}')
             
             except websockets.ConnectionClosed:
-                logger.log('DEBUG', f'Websocket: Connection closed. Re-opening.')
+                logger.log('DEBUG', f'Websocket: Connection closed. Re-opening...')
                 continue
 
             except Exception as e:
