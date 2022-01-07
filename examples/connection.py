@@ -11,9 +11,11 @@ Interfacing with the IB Client Portal:
 """
 client_http = ClientPortalHttp(watchdog_start=False)
 client_http.clientrequest_brokerage_accounts()
+time.sleep(1)
 client_http.clientrequest_reauthenticate()
-client_http.clientrequest_validate()
-client_http.clientrequest_authentication_status()
+time.sleep(1)
+#client_http.clientrequest_validate()
+#client_http.clientrequest_authentication_status()
 
 # Example call to search by name or symbol
 secdef=client_http.clientrequest_search("ES")
@@ -25,13 +27,13 @@ client_http.clientrequest_marketdata(conid)
 
 # Get historical data (HTTP-based)
 client_http.clientrequest_marketdata(conid)
-time.sleep(5)
+time.sleep(1)
 client_http.clientrequest_marketdata(conid)
-time.sleep(5)
+time.sleep(1)
 client_http.clientrequest_marketdata(conid)
-time.sleep(5)
+time.sleep(1)
 client_http.clientrequest_marketdata(conid)
-time.sleep(5)
+time.sleep(1)
 
 # Streaming data subscription (Websocket-based)
 client_ws = ClientPortalWebsocketsBase()

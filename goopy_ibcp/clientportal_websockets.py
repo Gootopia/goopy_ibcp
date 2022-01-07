@@ -88,7 +88,7 @@ class ClientPortalWebsocketsBase:
             # save off this context for use by other handlers since it was used successfully already
             self.sslcontext = result.ssl_context
 
-        except websockets.WebSocketException as e:
+        except (websockets.WebSocketException, TimeoutError) as e:
             logger.log('DEBUG', f'EXCEPTION: Websockets {e}')
             ret_code = ClientPortalWebsocketsError.Connection_Failed
 
@@ -103,18 +103,20 @@ class ClientPortalWebsocketsBase:
         logger.log('DEBUG', f'Websocket: Start message handler')
 
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
-            self.connection = ws
-            if len(self.data_subscribers) > 0:
-                logger.log('DEBUG', f'Websocket: Adding subscribers')
-                for conid in self.data_subscribers:
-                    subscriber_msg=f'smd+{conid}+{"fields":["31"]}'
-                    await self.connection.send(subscriber_msg)
-                    logger.log('DEBUG', f'Websocket: Subscribing to {conid}')
-
             try:
+                self.connection = ws
+                if len(self.data_subscribers) > 0:
+                    logger.log('DEBUG', f'Websocket: Adding subscribers')
+                    for conid in self.data_subscribers:
+                        subscriber_msg=f'smd+{conid}+{"fields":["31"]}'
+                        await self.connection.send(subscriber_msg)
+                        logger.log('DEBUG', f'Websocket: Subscribing to {conid}')
+                
+                logger.log('DEBUG', f'Websocket: messages received {len(ws.messages)}')
                 async for msg in ws:
+                    logger.log('DEBUG', f'Websocket: messages received {len(ws.messages)}')
                     logger.log('DEBUG', f'Websocket: Received {msg}')
-            
+
             except websockets.ConnectionClosed:
                 logger.log('DEBUG', f'Websocket: Connection closed. Re-opening...')
                 continue
@@ -144,7 +146,7 @@ class ClientPortalWebsocketsBase:
                 logger.log('DEBUG', f'Exited websocket heartbeat')
 
     async def __websocket_reqdata(self):
-        await asyncio.sleep(15)
+        await asyncio.sleep(5)
         logger.log('DEBUG', f'Requesting Data!')
         await self.connection.send('smd+461318816+{"fields":["31"]}')
         logger.log('DEBUG', f'Exiting ReqData')

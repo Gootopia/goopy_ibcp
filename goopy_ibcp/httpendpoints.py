@@ -59,10 +59,12 @@ class HttpEndpoints(Watchdog):
             resp = requests.get(cpurl, headers=HttpEndpoints.headers, params=params,
                                 verify=False, timeout=self.request_timeout_sec)
 
+        except requests.Timeout:
+            logger.log('DEBUG', f'Timeout: GET after {self.request_timeout_sec}')
+
         # Any exceptions and return will be passed off to __error_check for handling
         except Exception as e:
             resp_exception = e
-            pass
 
         # TODO: Refactor to use dataclass
         return cpurl, resp, resp_exception
@@ -80,10 +82,12 @@ class HttpEndpoints(Watchdog):
             resp = requests.post(cpurl, headers=HttpEndpoints.headers, params=params,
                                  verify=False, timeout=self.request_timeout_sec)
 
+        except requests.Timeout:
+            logger.log('DEBUG', f'Timeout: GET after {self.request_timeout_sec}')
+            
         # any exceptions will be passed off to __error_check for handling
         except Exception as e:
             resp_exception = e
-            pass
 
         # TODO: Refactor to use dataclass
         return cpurl, resp, resp_exception
