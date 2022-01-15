@@ -10,6 +10,7 @@ class Endpoints(Enum):
     AuthenticationStatus = '/iserver/auth/status'
     Reauthenticate = '/iserver/reauthenticate'
     Validate = '/sso/validate'
+    Logout = '/logout'
     
     # TRADE ENDPOINTS
     Trades = '/iserver/account/trades'

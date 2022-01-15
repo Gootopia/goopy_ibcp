@@ -10,10 +10,8 @@ Interfacing with the IB Client Portal:
 - If running IBeam, the watchdog is not required since IBeam will take care of pinging/re-authentication for you
 """
 client_http = ClientPortalHttp(watchdog_start=False)
-client_http.clientrequest_brokerage_accounts()
-time.sleep(1)
-client_http.clientrequest_reauthenticate()
-time.sleep(1)
+
+client_http.clientrequest_logout()
 #client_http.clientrequest_validate()
 #client_http.clientrequest_authentication_status()
 
@@ -25,15 +23,11 @@ conid="461318816"
 # Get a tick snapshot of instruments (HTTP-based)
 client_http.clientrequest_marketdata(conid)
 
-# Get historical data (HTTP-based)
-client_http.clientrequest_marketdata(conid)
-time.sleep(1)
-client_http.clientrequest_marketdata(conid)
-time.sleep(1)
-client_http.clientrequest_marketdata(conid)
-time.sleep(1)
-client_http.clientrequest_marketdata(conid)
-time.sleep(1)
+while True:
+    # Get historical data (HTTP-based)
+    client_http.clientrequest_marketdata(conid)
+    time.sleep(1)
+
 
 # Streaming data subscription (Websocket-based)
 client_ws = ClientPortalWebsocketsBase()

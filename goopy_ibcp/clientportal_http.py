@@ -48,6 +48,10 @@ class ClientPortalHttp(HttpEndpoints):
         """ Validate the current session."""
         return self.clientrequest_get(Endpoints.Validate.value)
 
+    def clientrequest_logout(self):
+        """ Log out of current session. """
+        return self.clientrequest_get(Endpoints.Logout.value)
+
     def clientrequest_trades(self):
         """ Return trades from last current and previous 6 days."""
         return self.clientrequest_get(Endpoints.Trades.value)
