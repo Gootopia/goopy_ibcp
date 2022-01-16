@@ -33,35 +33,35 @@ class ClientPortalHttp(HttpEndpoints):
         logger.log('DEBUG', f'Watchdog(HTTP): Status: Code:{result.statusCode}, {result.error}')
 
     # TODO: Add logging wrappers
-    def clientrequest_ping(self):
+    async def clientrequest_ping(self):
         """ Send session keep-alive."""
-        return self.clientrequest_post(Endpoints.Ping.value)
+        return await self.clientrequest_post(Endpoints.Ping.value)
 
-    def clientrequest_authentication_status(self):
+    async def clientrequest_authentication_status(self):
         """ Get current session status."""
-        return self.clientrequest_post(Endpoints.AuthenticationStatus.value)
+        return await self.clientrequest_post(Endpoints.AuthenticationStatus.value)
 
-    def clientrequest_reauthenticate(self):
+    async def clientrequest_reauthenticate(self):
         """ Re-authenticate a session."""
-        return self.clientrequest_post(Endpoints.Reauthenticate.value)
+        return await self.clientrequest_post(Endpoints.Reauthenticate.value)
 
-    def clientrequest_validate(self):
+    async def clientrequest_validate(self):
         """ Validate the current session."""
-        return self.clientrequest_get(Endpoints.Validate.value)
+        return await self.clientrequest_get(Endpoints.Validate.value)
 
-    def clientrequest_logout(self):
+    async def clientrequest_logout(self):
         """ Log out of current session. """
-        return self.clientrequest_post(Endpoints.Logout.value)
+        return await self.clientrequest_post(Endpoints.Logout.value)
 
-    def clientrequest_trades(self):
+    async def clientrequest_trades(self):
         """ Return trades from last current and previous 6 days."""
-        return self.clientrequest_get(Endpoints.Trades.value)
+        return await self.clientrequest_get(Endpoints.Trades.value)
 
-    def clientrequest_brokerage_accounts(self):
+    async def clientrequest_brokerage_accounts(self):
         """ Get list of accessible trading accounts."""
-        return self.clientrequest_get(Endpoints.BrokerageAccounts.value)
+        return await self.clientrequest_get(Endpoints.BrokerageAccounts.value)
 
-    def clientrequest_search(self, symbol):
+    async def clientrequest_search(self, symbol):
         """ Get a list of instruments by symbol or name
         Parameters:
             symbol:str = symbol or name
@@ -69,33 +69,33 @@ class ClientPortalHttp(HttpEndpoints):
         # NOTE: There is also a secType field which only currently supports 'STK'
         # It doesn't appear to do anything and doesn't fail if it's not passed, so we leave it off for now
         params = {"symbol" : symbol, "name": False}
-        return self.clientrequest_post(Endpoints.Search.value, params=params)
+        return await self.clientrequest_post(Endpoints.Search.value, params=params)
 
-    def clientrequest_search_futures(self, symbols):
+    async def clientrequest_search_futures(self, symbols):
         """ Get a list of futures based on symbol
         Parameters:
             symbol:str = comma separated list of case-sensitive futures symbols
         """
         params = {"symbols" : symbols}
-        return self.clientrequest_post(Endpoints.Search_Futures.value, params=params)
+        return await self.clientrequest_post(Endpoints.Search_Futures.value, params=params)
 
-    def clientrequest_marketdata(self, conids:str, fields:str="31"):
+    async def clientrequest_marketdata(self, conids:str, fields:str="31"):
         """ Request a snapshot of market data
         Parameters:
             conids:str = comma separated list of instrument conids
             fields:str = comma separated list of field codes (see IB docs)
         """
         params = {"conids" : conids, "fields" : fields}
-        return self.clientrequest_get(Endpoints.Market_Data.value, params=params)
+        return await self.clientrequest_get(Endpoints.Market_Data.value, params=params)
 
-    def clientrequest_marketdata_history(self, conids:str, period="1min"):
+    async def clientrequest_marketdata_history(self, conids:str, period="1min"):
         """ Request a snapshot of market data
         Parameters:
             conids:str = comma separated list of instrument conids
             fields:str = comma separated list of field codes (see IB docs)
         """
         params = {"conid" : conids, "period" : period}
-        return self.clientrequest_get(Endpoints.Market_Data_History.value, params=params)
+        return await self.clientrequest_get(Endpoints.Market_Data_History.value, params=params)
 
 if __name__ == '__main__':
     print("=== IB Client Portal (HTTP) ===")

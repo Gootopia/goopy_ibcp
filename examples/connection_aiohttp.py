@@ -12,6 +12,8 @@ async def aio_get(url,params=None):
 async def main():
     client_http = ClientPortalHttpAio(watchdog_start=False)
     await client_http.clientrequest_validate()
+    await client_http.clientrequest_brokerage_accounts()
+    await client_http.clientrequest_marketdata("461318816", "31")
     #val = await aio_get('https://localhost:5000/v1/api/sso/validate')
     #print(val)
     #val = await aio_get('https://localhost:5000/v1/api/portfolio/accounts')

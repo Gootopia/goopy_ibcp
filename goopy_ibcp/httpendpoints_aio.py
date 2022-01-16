@@ -48,12 +48,12 @@ class HttpEndpointsAio(Watchdog):
         result.url = self.__build_endpoint_url(endpoint)
 
         # Without ssl=False, we get issues with untrusted SSL certificates
-        # This should be ok for demo accounts, but need to follow up on this for live accounts
+        # This should be ok for demo accounts and testing, but we should look in to proper SSL for live accounts
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.request(method=method, url=result.url, ssl=False, timeout=self.request_timeout_sec, params=params) as response:
                     result.json = await response.json()
-                    logger.log('DEBUG', f'RESPONSE: {result.json}')
+                    logger.log('DEBUG', f'RESPONSE ({response.status}): {result.json}')
 
         except TimeoutError as e:
             logger.log('DEBUG', f'Timeout: {method} after {self.request_timeout_sec}')
