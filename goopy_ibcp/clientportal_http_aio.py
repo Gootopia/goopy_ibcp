@@ -1,13 +1,12 @@
-# NOTE: This is being deprecated in favor of aiohttp
 from overrides import overrides
 from loguru import logger
 
 from goopy_ibcp.endpoints import Endpoints
-from goopy_ibcp.httpendpoints import HttpEndpoints
+from goopy_ibcp.httpendpoints_aio import HttpEndpointsAio
 
 
-class ClientPortalHttp(HttpEndpoints):
-    # TODO: Document ClientPortalHttp class
+class ClientPortalHttpAio(HttpEndpointsAio):
+    # TODO: Document ClientPortalHttpAio class
     """
     Interactive Brokers ClientPortal Interface (HTTP).
     Refer to https://www.interactivebrokers.com/api/doc.html for API documentation
@@ -45,9 +44,9 @@ class ClientPortalHttp(HttpEndpoints):
         """ Re-authenticate a session."""
         return self.clientrequest_post(Endpoints.Reauthenticate.value)
 
-    def clientrequest_validate(self):
+    async def clientrequest_validate(self):
         """ Validate the current session."""
-        return self.clientrequest_get(Endpoints.Validate.value)
+        return await self.clientrequest_get(Endpoints.Validate.value)
 
     def clientrequest_logout(self):
         """ Log out of current session. """

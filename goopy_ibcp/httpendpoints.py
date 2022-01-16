@@ -1,6 +1,6 @@
 import requests
 import urllib3
-import json
+
 from loguru import logger
 
 from goopy_misc.watchdog import Watchdog
