@@ -11,9 +11,10 @@ Interfacing with the IB Client Portal:
 """
 client_http = ClientPortalHttp(watchdog_start=False)
 
-client_http.clientrequest_logout()
-#client_http.clientrequest_validate()
-#client_http.clientrequest_authentication_status()
+#client_http.clientrequest_logout()
+client_http.clientrequest_validate()
+client_http.clientrequest_authentication_status()
+client_http.clientrequest_reauthenticate()
 
 # Example call to search by name or symbol
 secdef=client_http.clientrequest_search("ES")
