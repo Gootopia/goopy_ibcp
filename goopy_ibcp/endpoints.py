@@ -11,7 +11,8 @@ class Endpoints(Enum):
     Reauthenticate = '/iserver/reauthenticate'
     Validate = '/sso/validate'
     Logout = '/logout'
-    
+    User = '/one/user'
+
     # TRADE ENDPOINTS
     Trades = '/iserver/account/trades'
 
@@ -20,8 +21,10 @@ class Endpoints(Enum):
     Search_Futures = '/trsrv/futures'
 
     # ACCOUNT ENDPOINTS
-    BrokerageAccounts = '/iserver/accounts'
+    PortfolioAccounts = '/portfolio/accounts'
+    ServerAccounts = '/iserver/accounts'
 
     # MARKET DATA
     Market_Data = '/iserver/marketdata/snapshot'
+    #Market_Data = '/md/snapshot'
     Market_Data_History = '/iserver/marketdata/history'
