@@ -12,7 +12,8 @@ async def main():
     await client_http.clientrequest_portfolio_accounts()
     await client_http.clientrequest_authentication_status()
     await client_http.clientrequest_server_accounts()
-
+    await asyncio.sleep(5)
+    
     while True:
         await client_http.clientrequest_marketdata("461318816", "31")
         await asyncio.sleep(1)

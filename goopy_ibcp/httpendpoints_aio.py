@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 import aiohttp
 import asyncio
 
@@ -58,11 +59,16 @@ class HttpEndpointsAio(Watchdog):
         # This should be ok for demo accounts and testing, but we should look in to proper SSL for live accounts
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.request(method=method, url=result.url, ssl=False, timeout=self.request_timeout_sec, params=params) as response:
+                async with session.request(method=method, url=result.url, ssl=False, timeout=self.request_timeout_sec, params=params) as response:                    
                     result.json = await response.json(content_type=None)
+                    
                     self.count_packets = self.count_packets + 1
                     logger.log('DEBUG', f'RESPONSE ({response.status}): {result.json}')
                     logger.log('DEBUG', f'Statistics: Packets={self.count_packets}, Timeouts={self.count_timeouts}, Exceptions={self.count_exceptions}')
+        
+        except JSONDecodeError as e:
+            logger.log('DEBUG', f'JSONDecode: Status={response.status}, Reason={response.reason}, Body={response._body}')
+            self.count_exceptions = self.count_exceptions+1
 
         except asyncio.exceptions.TimeoutError as e:
             logger.log('DEBUG', f'Timeout: {method} after {self.request_timeout_sec}')
