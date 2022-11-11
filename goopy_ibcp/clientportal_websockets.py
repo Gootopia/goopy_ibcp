@@ -148,7 +148,7 @@ class ClientPortalWebsocketsBase:
     async def __websocket_reqdata(self):
         await asyncio.sleep(5)
         logger.log('DEBUG', f'Requesting Data!')
-        await self.connection.send('smd+461318816+{"fields":["31"]}')
+        await self.connection.send('smd+495512551+{"fields":["31"]}')
         logger.log('DEBUG', f'Exiting ReqData')
 
     async def __async_loop(self):
