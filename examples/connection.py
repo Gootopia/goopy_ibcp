@@ -1,24 +1,35 @@
 """
-Simple test script to verify setup is running with IB
+Simple example test script for connecting and subscribing to data
 """
 from goopy_ibcp.clientportal_http import ClientPortalHttp
 from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
+import time
 
 """
 Interfacing with the IB Client Portal:
 - If running IBeam, the watchdog is not required since IBeam will take care of pinging/re-authentication for you
 """
 client_http = ClientPortalHttp(watchdog_start=False)
-client_http.clientrequest_brokerage_accounts()
-client_http.clientrequest_reauthenticate()
+
 client_http.clientrequest_validate()
 client_http.clientrequest_authentication_status()
+client_http.clientrequest_reauthenticate()
 
 # Example call to search by name or symbol
-msft_list=client_http.clientrequest_search("Microsoft")
-es_list=client_http.clientrequest_search("ES")
+secdef=client_http.clientrequest_search("ES")
+#print(secdef.json[0])
 
-# websocket for quote data
+conid="461318816"
+# Get a tick snapshot of instruments (HTTP-based)
+client_http.clientrequest_marketdata(conid)
+
+while True:
+    # Get historical data (HTTP-based)
+    client_http.clientrequest_marketdata(conid)
+    time.sleep(1)
+
+
+# Streaming data subscription (Websocket-based)
 client_ws = ClientPortalWebsocketsBase()
 
 try:

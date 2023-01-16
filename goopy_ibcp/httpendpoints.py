@@ -1,6 +1,6 @@
 import requests
 import urllib3
-import json
+
 from loguru import logger
 
 from goopy_misc.watchdog import Watchdog
@@ -28,25 +28,27 @@ class HttpEndpoints(Watchdog):
         if disable_request_warnings:
             urllib3.disable_warnings()
 
-    def clientrequest_get(self, endpoint=''):
+    def clientrequest_get(self, endpoint='', params=None):
         """ Gateway Get message request using desired endpoint. """
-        cpurl, resp, exception = self.__get(endpoint)
+        cpurl, resp, exception = self.__get(endpoint, params=params)
+        logger.log('DEBUG', f'GET({endpoint}), params={params}')
         result = self.__error_check(cpurl, resp, exception)
-        logger.log('DEBUG', f'GET({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
+        logger.log('DEBUG', f'GET-RESPONSE({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
         return result
 
     def clientrequest_post(self, endpoint='', params=None):
         """ Gateway Post message request using desired endpoint."""
         cpurl, resp, exception = self.__post(endpoint, params=params)
+        logger.log('DEBUG', f'POST({endpoint}), params={params}')
         result = self.__error_check(cpurl, resp, exception)
-        logger.log('DEBUG', f'POST({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
+        logger.log('DEBUG', f'POST-RESPONSE({endpoint}), status={result.statusCode}, error={result.error}, msg={result.json} ')
         return result
 
     def __build_endpoint_url(self, endpoint: str = ''):
         url = self.url_http + endpoint
         return url
 
-    def __get(self, endpoint: str = ''):
+    def __get(self, endpoint: str = '', params=None):
         cpurl = self.__build_endpoint_url(endpoint)
         resp = None
         resp_exception = None
@@ -56,12 +58,15 @@ class HttpEndpoints(Watchdog):
         # resp is the web response. Use resp.json() to get the client request specific response
         # resp = requests.post(cpurl, headers=self.headers, json=data, verify=False)
         try:
-            resp = requests.get(cpurl, headers=HttpEndpoints.headers, verify=False, timeout=self.request_timeout_sec)
+            resp = requests.get(cpurl, headers=HttpEndpoints.headers, params=params,
+                                verify=False, timeout=self.request_timeout_sec)
+
+        except requests.Timeout:
+            logger.log('DEBUG', f'Timeout: GET after {self.request_timeout_sec}')
 
         # Any exceptions and return will be passed off to __error_check for handling
         except Exception as e:
             resp_exception = e
-            pass
 
         # TODO: Refactor to use dataclass
         return cpurl, resp, resp_exception
@@ -79,10 +84,12 @@ class HttpEndpoints(Watchdog):
             resp = requests.post(cpurl, headers=HttpEndpoints.headers, params=params,
                                  verify=False, timeout=self.request_timeout_sec)
 
+        except requests.Timeout:
+            logger.log('DEBUG', f'Timeout: GET after {self.request_timeout_sec}')
+            
         # any exceptions will be passed off to __error_check for handling
         except Exception as e:
             resp_exception = e
-            pass
 
         # TODO: Refactor to use dataclass
         return cpurl, resp, resp_exception

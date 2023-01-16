@@ -1,13 +1,12 @@
-# NOTE: This is being deprecated in favor of aiohttp
 from overrides import overrides
 from loguru import logger
 
 from goopy_ibcp.endpoints import Endpoints
-from goopy_ibcp.httpendpoints import HttpEndpoints
+from goopy_ibcp.httpendpoints_aio import HttpEndpointsAio
 
 
-class ClientPortalHttp(HttpEndpoints):
-    # TODO: Document ClientPortalHttp class
+class ClientPortalHttpAio(HttpEndpointsAio):
+    # TODO: Document ClientPortalHttpAio class
     """
     Interactive Brokers ClientPortal Interface (HTTP).
     Refer to https://www.interactivebrokers.com/api/doc.html for API documentation
@@ -20,7 +19,7 @@ class ClientPortalHttp(HttpEndpoints):
         self.name = 'HTTP'
         # Base used by all endpoints
         #self.url_http = 'https://localhost:5000/v1/portal'
-        self.url_http = 'https://localhost:5000/v1/portal'
+        self.url_http = 'https://localhost:5000/v1/api'
         logger.log('DEBUG', f'Clientportal (HTTP) Started with gateway: {self.url_http}')
 
         # need to set autostart=False and call after we've defined url_http or we get exceptions due to the watchdog running before things are ready
@@ -57,9 +56,17 @@ class ClientPortalHttp(HttpEndpoints):
         """ Return trades from last current and previous 6 days."""
         return await self.clientrequest_get(Endpoints.Trades.value)
 
-    async def clientrequest_brokerage_accounts(self):
+    async def clientrequest_portfolio_accounts(self):
         """ Get list of accessible trading accounts."""
-        return await self.clientrequest_get(Endpoints.BrokerageAccounts.value)
+        return await self.clientrequest_get(Endpoints.PortfolioAccounts.value)
+
+    async def clientrequest_server_accounts(self):
+       """ Get list of accessible trading accounts."""
+       return await self.clientrequest_get(Endpoints.ServerAccounts.value)
+
+    async def clientrequest_user(self):
+        """ User connection check"""
+        return await self.clientrequest_get(Endpoints.User.value)
 
     async def clientrequest_search(self, symbol):
         """ Get a list of instruments by symbol or name
@@ -98,4 +105,4 @@ class ClientPortalHttp(HttpEndpoints):
         return await self.clientrequest_get(Endpoints.Market_Data_History.value, params=params)
 
 if __name__ == '__main__':
-    print("=== IB Client Portal (HTTP) ===")
+    print("=== IB Client Portal (HTTP_AIO) ===")
