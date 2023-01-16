@@ -9,11 +9,12 @@ from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
 async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
-    r = await client_http.clientrequest_validate()
+    # r = await client_http.clientrequest_validate()
     r = await client_http.clientrequest_user()
     r = await client_http.clientrequest_portfolio_accounts()
-    # r = await client_http.clientrequest_authentication_status()
-    await client_http.clientrequest_server_accounts()
+    r = await client_http.clientrequest_validate()
+    r = await client_http.clientrequest_authentication_status()
+    r = await client_http.clientrequest_server_accounts()
     await asyncio.sleep(5)
 
     while True:
@@ -34,3 +35,4 @@ if __name__ == "__main__":
     # event loop for the demos (websocket or http)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main_ws())
+    # loop.run_until_complete(main_http())

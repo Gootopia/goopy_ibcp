@@ -5,6 +5,7 @@ from enum import Enum
 from loguru import logger
 import json
 
+from goopy_ibcp.zmq_publisher import ZmqPublisher
 from goopy_certificate.certificate import Certificate, CertificateError
 
 
@@ -32,6 +33,7 @@ class ClientPortalWebsocketsBase:
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
         self.data_subscribers = []
+        self.publisher = ZmqPublisher()
         logger.log(
             "DEBUG",
             f"Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}",
@@ -130,6 +132,9 @@ class ClientPortalWebsocketsBase:
 
                 async for msg in ws:
                     logger.log("DEBUG", f"Received {msg}")
+                    m = json.loads(msg.decode())
+                    self.publisher.publish(None)
+                    print(m)
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
