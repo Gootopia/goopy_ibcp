@@ -133,7 +133,7 @@ class ClientPortalWebsocketsBase:
                 async for msg in ws:
                     logger.log("DEBUG", f"Received {msg}")
                     m = json.loads(msg.decode())
-                    self.publisher.publish(None)
+                    self.publisher.publish_string("EmptyMsg")
                     print(m)
 
             except websockets.ConnectionClosed:

@@ -2,6 +2,7 @@
 
 import zmq
 from time import sleep
+from datetime import datetime
 
 
 def thread():
@@ -24,8 +25,10 @@ def thread():
 
         if socket_es in sock:
             msg = socket_es.recv_string()
-            symbol, time, last = msg.split(",")
-            print(f"{time}:{symbol}={last}")
+
+            # symbol, time, last = msg.split(",")
+            # print(f"{time}:{symbol}={last}")
+            print(f"{datetime.now()}")
 
         sleep(0.001)
 
