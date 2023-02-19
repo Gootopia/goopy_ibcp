@@ -30,11 +30,6 @@ class JSONPacket(ABC):
         super().__init__()
 
     @staticmethod
-    def getdata(payload: dict, data: Enum) -> str:
-        """Convenience method so we don't always have to remember to add .name."""
-        return payload[data.name]
-
-    @staticmethod
     def format_payload(payload: dict = None):
         """Convert payload dictionary into transmit string (json)."""
         if payload is None:
