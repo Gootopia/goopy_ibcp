@@ -1,7 +1,7 @@
 import pytest
 import json
 
-from goopy_ibcp.jsonmsg import JSONMsg
+from goopy_ibcp.jsonpacket import JSONPacket
 
 # Requirement
 # - Topic input can't be empty (ValueError)
@@ -14,45 +14,70 @@ from goopy_ibcp.jsonmsg import JSONMsg
 class Test_JSONMsg:
     """Test class for JSONMsg."""
 
-    def test_topic_not_empty(self):
-        """Message topics must be set."""
+    # Some convenience stuff so we don't need to keep defining it
+    new_topic = "topic"
+    new_payload: dict = {"p1": "value1", "p2": "value2"}
+
+    @staticmethod
+    def get_test_message():
+        """Define a convenience test message to avoid DRY."""
+        return JSONPacket(Test_JSONMsg.new_topic, Test_JSONMsg.new_payload)
+
+    def test_topic_is_set(self):
+        """Message topic must be set."""
         with pytest.raises(ValueError):
-            msg = JSONMsg()
+            # Can't be empty (default is "")
+            msg = JSONPacket()
 
         with pytest.raises(ValueError):
-            msg = JSONMsg(None)
+            # Also can't be None
+            msg = JSONPacket(None)
 
     def test_topic_stored(self):
         """Topic must be stored in instance."""
-        msg = JSONMsg("newtopic")
-        assert msg.topic == "newtopic"
+        msg = Test_JSONMsg.get_test_message()
+        assert msg.topic == "topic"
 
     def test_separator_stored(self):
         """Separator must be stored in instance."""
-        msg = JSONMsg("newtopic")
-        assert msg.separator == "&&"
+        msg = Test_JSONMsg.get_test_message()
+        # This is the same separator the IB uses in their messages (see docs)
+        assert msg.separator == JSONPacket.PacketSeparator
+        assert msg.separator == "+"
 
-    def test_payload_not_none(self):
-        """Payload can't be empty."""
-        with pytest.raises(ValueError):
-            formatted_payload = JSONMsg.format_payload(None)
+    def test_msg_stored(self):
+        """Payload must be stored in the instance."""
+        msg = Test_JSONMsg.get_test_message()
+        assert msg.payload == Test_JSONMsg.new_payload
 
     def test_payload_formatter(self):
-        """Verify payload formatter output."""
-        topic = "topic"
-        msg = JSONMsg(topic)
-        payload = {"p1": "value1", "p2": "value2"}
-        payload_json = json.dumps(payload)
-
-        payload_formatted = JSONMsg.format_payload(payload)
+        """Verify payload formatter output converts dict to json."""
+        payload_json = json.dumps(Test_JSONMsg.new_payload)
+        payload_formatted = JSONPacket.format_payload(Test_JSONMsg.new_payload)
         assert payload_formatted == payload_json
 
-    def test_build_msg(self):
+    def test_format_empty_payload(self):
+        """Verify that no payload translates to empty json string."""
+        empty_json = json.dumps({})
+        empty_formatted = JSONPacket.format_payload({})
+        assert empty_formatted == empty_json
+
+        # Also test that a payload of None gives empty json
+        assert JSONPacket.format_payload(None) == empty_json
+
+    def test_build_and_store_packet(self):
         """Verify transmit msg format {topic}{separator}{json_payload}."""
-        topic = "topic"
-        msg = JSONMsg(topic)
-        payload = {"p1": "value1", "p2": "value2"}
-        payload_json = json.dumps(payload)
-        packet = msg.build_message(payload)
-        good_result = f"{topic}{msg.separator}{payload_json}"
-        assert packet == good_result
+        msg = Test_JSONMsg.get_test_message()
+        payload_json = json.dumps(Test_JSONMsg.new_payload)
+        formatted_packet = msg.build_packet()
+        good_result = f"{Test_JSONMsg.new_topic}{msg.separator}{payload_json}"
+        assert formatted_packet == good_result
+        assert formatted_packet == msg.formatted_packet
+
+    def test_get_packet_payload(self):
+        """Recover the packet payload in dict format."""
+        msg = Test_JSONMsg.get_test_message()
+        formatted_packet = msg.build_packet()
+        payload_dict = msg.get_packet_payload(formatted_packet)
+        assert payload_dict["p1"] == "value1"
+        assert payload_dict["p2"] == "value2"
