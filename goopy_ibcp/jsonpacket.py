@@ -40,14 +40,14 @@ class JSONPacket(ABC):
 
     @staticmethod
     def get_packet_payload(packet: str) -> dict:
-        """Extract json payload from packet and convert to dict"""
+        """Used to decode a received packet. Extract json payload from packet and convert to dict"""
         packet_json = packet.split(JSONPacket.PacketSeparator, 1)
         payload_json = packet_json[1]
         packet_dict = json.loads(payload_json)
         return packet_dict
 
     def build_packet(self):
-        """Packet format is {topic}{separator}{payload_json}."""
+        """Used to encode a packet for transmission. Packet format is {topic}{separator}{payload_json}."""
         formatted_msg = JSONPacket.format_payload(self.payload)
         packet = f"{self.topic}{self.separator}{formatted_msg}"
         self.formatted_packet = packet

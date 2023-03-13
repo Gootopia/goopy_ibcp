@@ -6,6 +6,7 @@ from loguru import logger
 import json
 
 from goopy_ibcp.zmq_publisher import ZmqPublisher
+from goopy_ibcp.ibmsg_tick import IBMsgTick
 from goopy_certificate.certificate import Certificate, CertificateError
 
 
@@ -123,18 +124,12 @@ class ClientPortalWebsocketsBase:
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
             try:
                 self.connection = ws
-                # if len(self.data_subscribers) > 0:
-                #    logger.log("DEBUG", f"Adding subscribers")
-                #    for conid in self.data_subscribers:
-                #        subscriber_msg = f'smd+{conid}+{"fields":["31"]}'
-                #        await self.send(subscriber_msg)
-                #        logger.log("DEBUG", f"Subscribing to {conid}")
 
                 async for msg in ws:
                     logger.log("DEBUG", f"Received {msg}")
-                    m = json.loads(msg.decode())
-                    self.publisher.publish_string("EmptyMsg")
-                    print(m)
+                    # This converts our received json string into a dict.
+                    recv_msg = json.loads(msg.decode())
+                    print(recv_msg)
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
@@ -166,13 +161,15 @@ class ClientPortalWebsocketsBase:
                 logger.log("DEBUG", f"Exited websocket heartbeat")
 
     async def __websocket_reqdata(self):
+        # Subscribe to desired data feeds.
         # Short sleep to let things get connected...TBD needed? Better way?
         await asyncio.sleep(5)
         logger.log("DEBUG", f"Start ReqData")
-        await self.send('smd+495512572+{"fields":["31"]}')
+        await self.send('smd+495512572+{"fields":["31", "84", "86"]}')
         logger.log("DEBUG", f"Exit ReqData")
 
     async def __async_loop(self):
+        # Kick off the various threads
         try:
             logger.log("DEBUG", f"Start Async Loop")
             ret = await self.__open_connection(url=self.url_ib_wss)

@@ -1,57 +1,62 @@
+"""Test classes for IBMsgTick/IBMsgConverterTick."""
+
+import pytest
 from goopy_ibcp.ibmsg_topic import IBTopic
-from goopy_ibcp.ibmsg_tick import IBMsgTick
+from goopy_ibcp.ibfieldmapper import IBFieldMapper
+from goopy_ibcp.ibmsg_tick import IBMsgTick, IBMsgConverterTick
 from datetime import datetime, timezone
 
 
 class Test_IBMsgTick:
-    """Test class for Tick Messages.
-    Includes the following:
-    time=UTC timestamp
-    conid=IB symbol conid
-    price=Price value
-    type=bid,ask,last (as appropriate)
-    """
+    """Test class for Tick Messages."""
 
     conid: str = "495512572"
     price: str = "2000.00"
     utc_timestamp = None
 
     @classmethod
-    def get_test_payload(cls):
-        """Initialize a test payload."""
+    def get_test_payload(cls) -> dict:
+        """Create a test payload."""
         dt = datetime(1987, 10, 19, 9, 30)
         utc_time = dt.replace(tzinfo=timezone.utc)
         # Timestamps from IB are in UTC, so we'll keep that format
         cls.utc_timestamp = utc_time.timestamp()
         return IBMsgTick.payload_dict(cls.utc_timestamp, cls.conid, cls.price)
 
-    def test_topic_last(self):
-        """Check for correct topic: Last"""
-        test_payload = Test_IBMsgTick.get_test_payload()
-        msg = IBMsgTick(test_payload, IBMsgTick.TickTypes.Last)
-        topic = f"{IBTopic.Tick}_{Test_IBMsgTick.conid}_{IBMsgTick.TickTypes.Last}"
-        assert msg.topic == topic
-
-    def test_topic_bid(self):
-        """Check for topic: Bid"""
-        test_payload = Test_IBMsgTick.get_test_payload()
-        msg = IBMsgTick(test_payload, IBMsgTick.TickTypes.Bid)
-        topic = f"{IBTopic.Tick}_{Test_IBMsgTick.conid}_{IBMsgTick.TickTypes.Bid}"
-        assert msg.topic == topic
-
-    def test_topic_ask(self):
-        """Check for topic: Ask"""
-        test_payload = Test_IBMsgTick.get_test_payload()
-        msg = IBMsgTick(test_payload, IBMsgTick.TickTypes.Ask)
-        topic = f"{IBTopic.Tick}_{Test_IBMsgTick.conid}_{IBMsgTick.TickTypes.Ask}"
-        assert msg.topic == topic
-
     def test_payload_decoder(self):
         """Check the build payload function."""
-        test_payload = Test_IBMsgTick.get_test_payload()
-        msg_tick = IBMsgTick(test_payload, IBMsgTick.TickTypes.Last)
-        pkt = msg_tick.build_packet()
-        decoded = msg_tick.get_packet_payload(pkt)
-        assert decoded[IBMsgTick.Fields.Conid] == Test_IBMsgTick.conid
-        assert decoded[IBMsgTick.Fields.Price] == Test_IBMsgTick.price
-        assert decoded[IBMsgTick.Fields.Time] == Test_IBMsgTick.utc_timestamp
+        assert False
+
+
+class TestIBMsgConverterTick:
+    """Test class for generating system message traffic from raw IB tick traffic."""
+
+    def test_conid_exists(self):
+        """Error check to make sure that we are getting the contract id (conid)."""
+        with pytest.raises(ValueError):
+            # Test message with no conid to cause an error.
+            test_str = '{"topic": "value", "_updated" : "12345678"}'
+            test_dict = IBMsgConverterTick.create_dict_from_raw_msg(test_str)
+
+    def test_price_data_exists(self):
+        """Error check to make sure that we are getting some price data with this message."""
+        with pytest.raises(ValueError):
+            # Test message with no price data to cause an error.
+            test_str = '{"topic": "value", "_updated" : "12345678", "conid" : "1234"}'
+            test_dict = IBMsgConverterTick.create_dict_from_raw_msg(test_str)
+
+    def test_payload_decode(self):
+        """Verify that converter pulls out correct fields from example string."""
+        test_dict: dict = IBMsgConverterTick.create_dict_from_raw_msg(
+            IBMsgConverterTick._get_test_string()
+        )
+
+        # Make sure we extracted what we want from raw IB json message. See test string in IBMsgConverterTick
+        assert IBFieldMapper.Conid in test_dict.keys()
+        assert test_dict[IBFieldMapper.Conid] == 495512572
+        assert IBFieldMapper.Price_Last in test_dict.keys()
+        assert test_dict[IBFieldMapper.Price_Last] == "3913.50"
+        assert IBFieldMapper.Price_Ask in test_dict.keys()
+        assert test_dict[IBFieldMapper.Price_Ask] == "3913.75"
+        assert IBFieldMapper.Price_Bid in test_dict.keys()
+        assert test_dict[IBFieldMapper.Price_Bid] == "3913.25"

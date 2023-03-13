@@ -1,4 +1,5 @@
-# ZeroMQ client
+# ZeroMQ client example with ZMQ polling
+# Polling is used to check for the receipt of various topics (see ZMQ docs)
 
 import zmq
 from time import sleep

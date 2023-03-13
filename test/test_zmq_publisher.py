@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from goopy_ibcp.zmq_publisher import ZmqPublisher
 
-# @patch('goopy_ibcp.clientportal_websockets.Certificate.get_certificate')
+
 class TestZmqPublisher:
     def test_empty_message(self):
         """Message can't be empty"""

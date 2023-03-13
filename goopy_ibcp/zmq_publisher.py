@@ -25,7 +25,7 @@ class ZmqPublisher:
         if msg is None:
             return False
 
-        # We are only using human readable strings as payloads
+        # Currently we are only using human readable strings as payloads
         if isinstance(msg, str) is False:
             return False
 
