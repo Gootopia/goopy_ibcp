@@ -20,8 +20,3 @@ class IBFieldMapper:
     Price_Bid: str = "84"
     Price_Ask: str = "86"
     Market_Data_Availability: str = "6509"
-
-    @classmethod
-    def map_from_ib(cls, ib_field_code: str = None):
-        if ib_field_code is None:
-            raise ValueError("field code cannot be 'NoneType'")

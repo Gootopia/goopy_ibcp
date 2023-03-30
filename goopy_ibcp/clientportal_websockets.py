@@ -6,8 +6,8 @@ from loguru import logger
 import json
 
 from goopy_ibcp.zmq_publisher import ZmqPublisher
-from goopy_ibcp.ibmsg_tick import IBMsgTick
 from goopy_certificate.certificate import Certificate, CertificateError
+from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
 
 
 class ClientPortalWebsocketsError(Enum):
@@ -125,11 +125,11 @@ class ClientPortalWebsocketsBase:
             try:
                 self.connection = ws
 
-                async for msg in ws:
-                    logger.log("DEBUG", f"Received {msg}")
-                    # This converts our received json string into a dict.
-                    recv_msg = json.loads(msg.decode())
-                    print(recv_msg)
+                async for msg_raw in ws:
+                    logger.log("DEBUG", f"Received {msg_raw}")
+                    new_ib_msg = IBMsgConverterTick()
+                    new_ib_msg_dict = new_ib_msg.create_dict_from_raw_msg(msg_raw)
+                    print(new_ib_msg_dict)
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")

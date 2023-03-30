@@ -9,17 +9,6 @@ import json
 class Test_IBMsgTick:
     """Test class for Tick Messages."""
 
-    utc_timestamp = None
-
-    @classmethod
-    def get_test_payload(cls):
-        """Create a test payload."""
-        dt = datetime(1987, 10, 19, 9, 30)
-        utc_time = dt.replace(tzinfo=timezone.utc)
-        # Timestamps from IB are in UTC, so we'll keep that format
-        cls.utc_timestamp = utc_time.timestamp()
-        return IBMsg.payload_dict(cls.utc_timestamp, cls.conid, cls.price)
-
 
 class Test_IBMsgConverter:
     """Test class for generating system base message."""
@@ -31,23 +20,44 @@ class Test_IBMsgConverter:
                 "Not-a-JSON-string"
             )
 
-    def test_topic_exists(self):
-        """Error check that IB JSON strings should always have a topic key."""
-        with pytest.raises(ValueError):
-            test_str = '{"not-a-topic-key": "value"}'
-            test_dict, ib_dict = IBMsgConverter.create_dict_from_raw_msg(test_str)
+    def test_missing_keys(self):
+        """Error check that we can flag any required keys are missing in a message dictionary."""
+        test_tick_str = IBMsgConverter._get_test_tick_string()
+        ib_msg_dict = IBMsgConverter.create_dict_from_raw_msg(test_tick_str)
+        missing_keys = IBMsgConverter._check_keys(
+            ib_msg_dict, required_keys=["badkey1", "badkey2"]
+        )
+        assert "badkey1" in missing_keys
+        assert "badkey2" in missing_keys
 
-    def test_utc_timestamp_exists(self):
-        """Error check to make sure that we are getting '_updated' (UTC timestamp)."""
-        with pytest.raises(ValueError):
-            test_str = '{"topic": "value"}'
-            test_dict, ib_dict = IBMsgConverter.create_dict_from_raw_msg(test_str)
+    def test_msg_topic_is_substring(self):
+        """Verify we can check if desired topic is sub-string of message topic."""
+        test_str = IBMsgConverter._get_test_tick_string()
+        test_dict = IBMsgConverter._get_test_dict(test_str)
 
-    def test_payload_decode(self):
-        """Verify that converter pulls out the correct fields/values for the payload dict."""
-        test_dict, ib_dict = IBMsgConverter.create_dict_from_raw_msg(
-            IBMsgConverter._get_test_string()
+        assert IBMsgConverter.verify_msg_topic(test_dict, "smd", exact_match=False)
+
+    def test_msg_topic_is_exact_match(self):
+        """Verify we can check if desired topic is an exact match of message topic."""
+        test_str = IBMsgConverter._get_test_tick_string()
+        test_dict = IBMsgConverter._get_test_dict(test_str)
+
+        assert IBMsgConverter.verify_msg_topic(
+            test_dict, "smd+495512572", exact_match=True
         )
 
-        assert IBFieldMapper.Time in test_dict.keys()
-        assert test_dict[IBFieldMapper.Time] == 1678284754734
+    def test_msg_topic_no_match(self):
+        """Error check when no match is found either exact or as sub-string."""
+        test_str = IBMsgConverter._get_test_tick_string()
+        test_dict = IBMsgConverter._get_test_dict(test_str)
+
+        # no matching substring in topic
+        assert (
+            IBMsgConverter.verify_msg_topic(test_dict, "bad_topic", exact_match=False)
+            == False
+        )
+        # no exact match in topic
+        assert (
+            IBMsgConverter.verify_msg_topic(test_dict, "bad_topic", exact_match=True)
+            == False
+        )
