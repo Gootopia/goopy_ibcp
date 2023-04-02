@@ -56,7 +56,7 @@ class IBMsgConverter(ABC):
     @abstractclassmethod
     def verify_keys(cls, keys: list) -> list:
         """Placeholder function for checking for a specific list of keys. Overridden for actual messages."""
-        pass
+        raise NotImplementedError("Provide a dict of required keys and override.")
 
     @classmethod
     def verify_msg_topic(

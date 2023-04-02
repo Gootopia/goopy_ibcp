@@ -42,6 +42,7 @@ class IBMsgTick(IBMsg):
 class IBMsgConverterTick(IBMsgConverter):
     """Extract desired fields from IB tick messages for system tick messages."""
 
+    # There's lots of keys in an IB message dict, but we only need to re-transmit a portion of them
     required_keys: list = [IBFieldMapper.Conid, IBFieldMapper.Time, IBFieldMapper.Topic]
 
     @classmethod
@@ -52,7 +53,7 @@ class IBMsgConverterTick(IBMsgConverter):
 
     @classmethod
     def verify_keys(cls, msg_dict: dict) -> list:
-        """Verify the required keys against the message dict."""
+        """Check that required keys are present in the message dictionary."""
         missing_keys = cls._check_keys(msg_dict, cls.required_keys)
         return missing_keys
 

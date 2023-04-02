@@ -8,9 +8,13 @@ import json
 from goopy_ibcp.zmq_publisher import ZmqPublisher
 from goopy_certificate.certificate import Certificate, CertificateError
 from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
+from goopy_ibcp.ibmsg import IBMsgConverter
+from goopy_ibcp.ibmsg_topic import IBTopic
 
 
 class ClientPortalWebsocketsError(Enum):
+    """Define client portal error messages."""
+
     Ok = 0
     Unknown = 1
     Invalid_URL = 2
@@ -31,6 +35,7 @@ class ClientPortalWebsocketsBase:
         self.url_ib_wss = "wss://localhost:5000/v1/api/ws"
         self.connection = None
         self.sslcontext = None
+        self.msg_handlers = {}
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
         self.data_subscribers = []
@@ -39,6 +44,11 @@ class ClientPortalWebsocketsBase:
             "DEBUG",
             f"Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}",
         )
+
+        # Message converters we want to handle. Other messages will be discarded when received.
+        self.msg_handlers[
+            IBTopic.MarketData
+        ] = IBMsgConverterTick.create_dict_from_raw_msg
 
     def loop(self):
         """Start websocket message handler and heartbeat"""
@@ -127,8 +137,12 @@ class ClientPortalWebsocketsBase:
 
                 async for msg_raw in ws:
                     logger.log("DEBUG", f"Received {msg_raw}")
-                    new_ib_msg = IBMsgConverterTick()
-                    new_ib_msg_dict = new_ib_msg.create_dict_from_raw_msg(msg_raw)
+
+                    # Don't know what message type is yet, so just use base and extract the topic
+                    new_ib_msg_dict = IBMsgConverter.create_dict_from_raw_msg(msg_raw)
+                    new_msg_topic = new_ib_msg_dict["topic"]
+
+                    IBTopic.process_topic(new_msg_topic, self.msg_handlers, msg_raw)
                     print(new_ib_msg_dict)
 
             except websockets.ConnectionClosed:
@@ -150,7 +164,7 @@ class ClientPortalWebsocketsBase:
             try:
                 while True:
                     await self.send("tic")
-                    await self.send('smd+495512572+{"fields":["31"]}')
+                    await self.send('smd+551601544+{"fields":["31"]}')
                     logger.log("DEBUG", f"Send Heartbeat {self.heartbeat_sec}s")
                     await asyncio.sleep(self.heartbeat_sec)
 
@@ -165,7 +179,7 @@ class ClientPortalWebsocketsBase:
         # Short sleep to let things get connected...TBD needed? Better way?
         await asyncio.sleep(5)
         logger.log("DEBUG", f"Start ReqData")
-        await self.send('smd+495512572+{"fields":["31", "84", "86"]}')
+        await self.send('smd+551601544+{"fields":["31", "84", "86"]}')
         logger.log("DEBUG", f"Exit ReqData")
 
     async def __async_loop(self):
