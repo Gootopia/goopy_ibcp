@@ -1,42 +1,8 @@
 """IB Message: Tick."""
-from goopy_ibcp.ibmsg import IBMsg, IBMsgConverter
+from goopy_ibcp.ibmsg import IBMsgConverter
 from goopy_ibcp.ibmsg_topic import IBTopic
 from goopy_ibcp.ibfieldmapper import IBFieldMapper
 import json
-
-
-class IBMsgTick(IBMsg):
-    """System message for tick data received from IB quote server."""
-
-    class Fields:
-        """Fields used by tick message."""
-
-        Time: str = "time"
-        Conid: str = "conid"
-        Price: str = "price"
-
-    class TickTypes:
-        """Types of tick data available."""
-
-        Bid: str = "bid"
-        Ask: str = "ask"
-        Last: str = "last"
-
-    def __init__(self, payload: dict, ticktype: TickTypes) -> None:
-        """Constructor."""
-        conid = payload[IBMsgTick.Fields.Conid]
-        # allows topics to be made more specific so that additional filtering can be done by ZMQ
-        tick_topic = f"{IBTopic.MarketData}_{conid}_{ticktype}"
-        super().__init__(tick_topic, payload)
-
-    @staticmethod
-    def payload_dict(timestamp_utc: str, conid: str, price: str):
-        """Build payload dictionary."""
-        payload = {}
-        payload[IBMsgTick.Fields.Time] = timestamp_utc
-        payload[IBMsgTick.Fields.Conid] = conid
-        payload[IBMsgTick.Fields.Price] = price
-        return payload
 
 
 class IBMsgConverterTick(IBMsgConverter):
@@ -60,20 +26,22 @@ class IBMsgConverterTick(IBMsgConverter):
     @classmethod
     def create_dict_from_raw_msg(cls, raw_msg: str = None) -> dict:
         """Create a system tick message from a raw json string received from IB."""
+        # The call to super() does the string conversion and gives us the starting msg dict.
         ib_msg_dict = super().create_dict_from_raw_msg(raw_msg)
         transmit_msg_dict = {}
 
-        missing_keys = cls._check_keys(ib_msg_dict, cls.required_keys)
+        # Verify that all the keys that we care about are present in this message
+        missing_keys = cls.verify_keys(ib_msg_dict)
 
         # Once required keys are verifed, manually check for price data
         # We can have more than one (depending on market data subscription), but we need at least one.
         if not missing_keys:
             transmit_msg_dict[IBFieldMapper.Conid] = ib_msg_dict[IBFieldMapper.Conid]
             transmit_msg_dict[IBFieldMapper.Time] = ib_msg_dict[IBFieldMapper.Time]
-
-            foundPriceData = False
+            transmit_msg_dict[IBFieldMapper.Topic] = ib_msg_dict[IBFieldMapper.Topic]
 
             # Price data (There are potentially lots). We only care about some of them.
+            foundPriceData = False
             if IBFieldMapper.Price_Last in ib_msg_dict.keys():
                 transmit_msg_dict[IBFieldMapper.Price_Last] = ib_msg_dict[
                     IBFieldMapper.Price_Last

@@ -2,15 +2,8 @@
 
 import pytest
 from goopy_ibcp.ibfieldmapper import IBFieldMapper
-from goopy_ibcp.ibmsg_tick import IBMsgTick, IBMsgConverterTick
-
-
-class Test_IBMsgTick:
-    """Test class for Tick Messages."""
-
-    def test_payload_decoder(self):
-        """Check the build payload function."""
-        assert False
+from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
+from goopy_ibcp.ibmsg_topic import IBTopic
 
 
 class TestIBMsgConverterTick:
@@ -56,6 +49,8 @@ class TestIBMsgConverterTick:
         assert test_dict[IBFieldMapper.Conid] == 495512572
         assert IBFieldMapper.Time in test_dict.keys()
         assert test_dict[IBFieldMapper.Time] == 1678666665031
+        assert IBFieldMapper.Topic in test_dict.keys()
+        assert test_dict[IBFieldMapper.Topic] == "smd+495512572"
         assert IBFieldMapper.Price_Last in test_dict.keys()
         assert test_dict[IBFieldMapper.Price_Last] == "3913.50"
         assert IBFieldMapper.Price_Ask in test_dict.keys()

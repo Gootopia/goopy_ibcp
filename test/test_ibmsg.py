@@ -1,13 +1,9 @@
 import pytest
 from goopy_ibcp.ibmsg_topic import IBTopic
 from goopy_ibcp.ibfieldmapper import IBFieldMapper
-from goopy_ibcp.ibmsg import IBMsg, IBMsgConverter
+from goopy_ibcp.ibmsg import IBMsgConverter
 from datetime import datetime, timezone
 import json
-
-
-class Test_IBMsgTick:
-    """Test class for Tick Messages."""
 
 
 class Test_IBMsgConverter:

@@ -8,21 +8,6 @@ from goopy_ibcp.jsonpacket import JSONPacket
 import json
 
 
-class IBMsg(JSONPacket):
-    """System message for tick data received from IB quote server."""
-
-    def create_topic(self, payload: dict):
-        """Generate a message topic."""
-        raise NotImplementedError(
-            "create_topic() must be overriden to provide actual message topic!"
-        )
-
-    def __init__(self, payload: dict) -> None:
-        """IBMsg constructor."""
-        tick_topic = self.create_topic(self, payload)
-        super().__init__(tick_topic, payload)
-
-
 class IBMsgConverter(ABC):
     """Abstract base class for defining system messages."""
 

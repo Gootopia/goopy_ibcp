@@ -9,6 +9,7 @@ from goopy_ibcp.zmq_publisher import ZmqPublisher
 from goopy_certificate.certificate import Certificate, CertificateError
 from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
 from goopy_ibcp.ibmsg import IBMsgConverter
+from goopy_ibcp.jsonpacket import JSONPacket
 from goopy_ibcp.ibmsg_topic import IBTopic
 
 
@@ -139,11 +140,17 @@ class ClientPortalWebsocketsBase:
                     logger.log("DEBUG", f"Received {msg_raw}")
 
                     # Don't know what message type is yet, so just use base and extract the topic
-                    new_ib_msg_dict = IBMsgConverter.create_dict_from_raw_msg(msg_raw)
-                    new_msg_topic = new_ib_msg_dict["topic"]
+                    new_msg_dict = IBMsgConverter.create_dict_from_raw_msg(msg_raw)
+                    new_msg_topic = new_msg_dict["topic"]
 
-                    IBTopic.process_topic(new_msg_topic, self.msg_handlers, msg_raw)
-                    print(new_ib_msg_dict)
+                    # If a handler is available, we'll get a specific message dictionary returned to us
+                    new_msg_dict = IBTopic.process_topic(
+                        new_msg_topic, self.msg_handlers, msg_raw
+                    )
+
+                    new_json_packet = JSONPacket(new_msg_topic, new_msg_dict)
+                    xmit_msg = new_json_packet.build_packet()
+                    print(new_msg_dict)
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
