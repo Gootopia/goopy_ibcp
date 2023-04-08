@@ -2,7 +2,6 @@
 from goopy_ibcp.ibmsg import IBMsgConverter
 from goopy_ibcp.ibmsg_topic import IBTopic
 from goopy_ibcp.ibfieldmapper import IBFieldMapper
-import json
 
 
 class IBMsgConverterTick(IBMsgConverter):

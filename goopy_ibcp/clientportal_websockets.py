@@ -148,9 +148,12 @@ class ClientPortalWebsocketsBase:
                         new_msg_topic, self.msg_handlers, msg_raw
                     )
 
-                    new_json_packet = JSONPacket(new_msg_topic, new_msg_dict)
-                    xmit_msg = new_json_packet.build_packet()
-                    print(new_msg_dict)
+                    # Only transmit packets that were handled
+                    if new_msg_dict is not None:
+                        new_json_packet = JSONPacket(new_msg_topic, new_msg_dict)
+                        xmit_msg = new_json_packet.build_packet()
+                        self.publisher.publish_string(xmit_msg)
+                        logger.log("DEBUG", f"Transmitted: {xmit_msg}")
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
