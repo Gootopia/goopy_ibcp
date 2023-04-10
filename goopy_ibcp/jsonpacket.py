@@ -13,9 +13,7 @@ class JSONPacket(ABC):
     """Template base class for transmitting messages."""
 
     # Used to separate the topic from the payload
-    PacketSeparator: str = "+"
-    # Optional suffix on a topic to allow more specific messages of a given topic type
-    TopicSeparator: str = "_"
+    PacketSeparator: str = "&"
 
     def __init__(
         self, topic: str = "", payload: dict = None, separator: str = PacketSeparator
