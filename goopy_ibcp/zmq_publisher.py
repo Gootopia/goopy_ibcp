@@ -9,15 +9,12 @@ class ZmqPublisher:
     2) Payloads cannot be empty
     """
 
-    context = None
-
     def __init__(self, binding="tcp://*:5555"):
         """Our constructor."""
         self.context = zmq.Context()
         self.binding = binding
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind(binding)
-        self.tick_last = 0
 
     @staticmethod
     def check_msg_format(msg):

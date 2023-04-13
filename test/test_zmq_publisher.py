@@ -1,6 +1,4 @@
 import pytest
-from unittest.mock import patch
-
 from goopy_ibcp.zmq_publisher import ZmqPublisher
 
 

@@ -5,45 +5,52 @@
 import zmq
 from time import sleep
 from loguru import logger
+from goopy_ibcp.zmq_client import ZmqClient
 
 connection = "tcp://localhost:5555"
 # message topic to subscribe to
 msg_subscription = "smd"
-# Amount of time to wait for a message be it's flagged
+
+socket_tickfeed = "ticks"
+
+# Amount of time to wait for a message
 timeout_ms = 30000
 
 
-def thread():
-    context = zmq.Context()
-    logger.log("DEBUG", f"Created socket")
-    socket_es = context.socket(zmq.SUB)
-    socket_es.connect(f"{connection}")
-    logger.log("DEBUG", f"Connecting to '{connection}'")
-    socket_es.setsockopt_string(zmq.SUBSCRIBE, f"{msg_subscription}")
-    logger.log("DEBUG", f"Subscribing to: '{msg_subscription}'")
-    poller = zmq.Poller()
-    poller.register(socket_es, zmq.POLLIN)
+def ib_client_thread():
+    """Client thread for handling IB message traffic."""
+
+    client = ZmqClient()
+    logger.log("DEBUG", f"Opening socket to {connection}")
+    client.add_socket(socket_tickfeed, connection)
+
+    client.register_msg_subscription(socket_tickfeed, msg_subscription)
+    logger.log("DEBUG", f"Registering msg '{msg_subscription}'")
 
     logger.log("DEBUG", f"Entering polling loop")
     msg = None
+
     while True:
         try:
-            sock = dict(poller.poll(timeout_ms))
+            socket_with_msg = dict(client.poller.poll(timeout_ms))
         except KeyboardInterrupt:
             logger.log("DEBUG", f"Polling terminated via Ctrl-C")
             break
         except Exception as e:
             logger.log("DEBUG", f"Exception {e}")
 
-        if sock is not None:
-            if socket_es in sock:
-                msg = socket_es.recv_string()
-                logger.log("DEBUG", f"Received {msg}")
+        if socket_with_msg is not None:
+            for socket_name in client.sockets:
+                socket = client.sockets[socket_name]
+                if socket in socket_with_msg:
+                    msg = socket.recv_string()
+                    logger.log("DEBUG", f"Received {msg}")
 
         sleep(0.001)
 
+    # Normally don't get here without user exit or error
     logger.log("DEBUG", f"Exited polling loop")
 
 
 if __name__ == "__main__":
-    thread()
+    ib_client_thread()
