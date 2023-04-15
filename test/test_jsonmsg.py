@@ -81,3 +81,12 @@ class Test_JSONMsg:
         payload_dict = msg.get_packet_payload(formatted_packet)
         assert payload_dict["p1"] == "value1"
         assert payload_dict["p2"] == "value2"
+
+    def test_payload_has_separator(self):
+        """Error check to make sure payload doesn't include the separator or str.split() will have issues."""
+        bad_payload = {}
+        bad_payload["key1"] = "value1"
+        bad_payload["key2"] = JSONPacket.PacketSeparator
+
+        with pytest.raises(ValueError):
+            JSONPacket.format_payload(bad_payload)

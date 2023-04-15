@@ -34,6 +34,12 @@ class JSONPacket(ABC):
             payload = {}
 
         payload_formatted = json.dumps(payload)
+
+        # Check that separator isn't in the payload or str.split() will not give us proper separation!
+        if JSONPacket.PacketSeparator in payload_formatted:
+            raise ValueError(
+                f"Packet separator '{JSONPacket.PacketSeparator}' cannot be part of payload!"
+            )
         return payload_formatted
 
     @staticmethod
