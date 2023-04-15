@@ -6,12 +6,14 @@ import zmq
 from time import sleep
 from loguru import logger
 from goopy_ibcp.zmq_client import ZmqClient
-from goopy_ibcp.ibmsg_topic import IBTopic
 
 # Socket connection
 connection = "tcp://localhost:5555"
 
 socket_ib = "interactive_brokers"
+
+# subscribe to tick feed (all)
+msg_subscription = "smd"
 
 # Amount of time to wait for a message
 timeout_ms = 30000
@@ -21,6 +23,7 @@ def ib_client_thread():
     """Client thread for handling IB message traffic."""
 
     client = ZmqClient()
+    logger.log("DEBUG", f"Opening socket to {connection}")
 
     # Create a new socket connection with this client. Can add multiple sockets per client if needed.
     try:
@@ -30,8 +33,9 @@ def ib_client_thread():
     except Exception as e:
         logger.log("DEBUG", f"General Exception: {e.strerror} ({e.errno})")
 
-    # Add a subscriber to the ib tick feed (all ticks)
-    client.register_socket_msg_listener(socket_ib, IBTopic.MarketData)
+    #
+    client.register_socket_msg_listener(socket_ib, msg_subscription)
+    logger.log("DEBUG", f"Registering msg '{msg_subscription}'")
 
     logger.log("DEBUG", f"Entering polling loop")
     msg = None
