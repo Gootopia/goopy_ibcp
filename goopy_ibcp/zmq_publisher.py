@@ -1,5 +1,6 @@
 """zmq message publisher."""
 import zmq
+from loguru import logger
 
 
 class ZmqPublisher:
@@ -12,6 +13,10 @@ class ZmqPublisher:
     def __init__(self, binding="tcp://*:5555"):
         """Our constructor."""
         self.context = zmq.Context()
+        logger.log(
+            "DEBUG",
+            f"New ZMQ Publisher (zmq,pyzmq)=({zmq.zmq_version()},{zmq.pyzmq_version()})",
+        )
         self.binding = binding
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind(binding)

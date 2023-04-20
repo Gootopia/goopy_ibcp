@@ -3,6 +3,8 @@ import pytest
 from goopy_ibcp.zmq_client import ZmqClient
 
 
-class TestZmqClient:
-    def test_example(self):
-        pass
+class Test_ZmqClient:
+    def test_register_listener(self):
+        test_client = ZmqClient()
+        with pytest.raises(KeyError):
+            test_client.register_socket_msg_listener("bad_socket_name", "message")

@@ -34,5 +34,7 @@ def main_ws() -> None:
 if __name__ == "__main__":
     # event loop for the demos (websocket or http)
     loop = asyncio.get_event_loop()
+
+    # Uncomment one or the other (not both) to run ws/http
     loop.run_until_complete(main_ws())
     # loop.run_until_complete(main_http())
