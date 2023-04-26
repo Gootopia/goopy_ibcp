@@ -1,62 +1,42 @@
-# Example ZeroMQ client example with ZMQ polling
-# Polling is used to check for the receipt of various topics (see ZMQ docs)
-# IB Server publishes tick messages with topic 'smd+{conid}
+# Example PyZmq client
+# Refer to event loops: https://pyzmq.readthedocs.io/en/latest/howto/eventloop.html#
 
-import zmq
+from zmq.eventloop.zmqstream import ZMQStream
+from tornado import ioloop
+
 from time import sleep
 from loguru import logger
 from goopy_ibcp.zmq_client import ZmqClient
 from goopy_ibcp.ibmsg_topic import IBTopic
 
 # Socket connection
-connection = "tcp://localhost:5555"
-
+connection_ib = "tcp://localhost:5555"
+# Socket name
 socket_ib = "interactive_brokers"
 
-# Amount of time to wait for a message
-timeout_ms = 30000
+
+def recv_callback(msg):
+    """This Handler method called every time something is received."""
+    print(f"message={msg}")
 
 
-def ib_client_thread():
-    """Client thread for handling IB message traffic."""
-
-    client = ZmqClient()
-
-    # Create a new socket connection with this client. Can add multiple sockets per client if needed.
-    try:
-        client.add_socket(socket_ib, connection)
-    except zmq.ZMQError as e:
-        logger.log("DEBUG", f"ZMQ Error: {e.strerror} ({e.errno})")
-    except Exception as e:
-        logger.log("DEBUG", f"General Exception: {e.strerror} ({e.errno})")
-
-    # Add a subscriber to the ib tick feed (all ticks)
-    client.register_socket_msg_listener(socket_ib, IBTopic.MarketData)
-
-    logger.log("DEBUG", f"Entering polling loop")
-    msg = None
-
-    while True:
-        try:
-            socket_with_msg = dict(client.poller.poll(timeout_ms))
-        except KeyboardInterrupt:
-            logger.log("DEBUG", f"Polling terminated via Ctrl-C")
-            break
-        except Exception as e:
-            logger.log("DEBUG", f"Exception {e}")
-
-        if socket_with_msg is not None:
-            for socket_name in client.sockets:
-                socket = client.sockets[socket_name]
-                if socket in socket_with_msg:
-                    msg = socket.recv_string()
-                    logger.log("DEBUG", f"Received {msg}")
-
-        sleep(0.001)
+def msg_client():
+    """PyZMQ client to:
+    1) Create a socket
+    2) Register a listener and a handler
+    3) Create a listening loop
+    """
+    ZmqClient.log_version()
+    socket = ZmqClient.add_socket(socket_ib, connection_ib)
+    # IB Server publishes tick messages with topic 'smd+{conid}, but for the example just set filter to subscribe to everything
+    ZmqClient.register_listener(socket_ib, IBTopic.MarketData)
+    stream = ZMQStream(socket)
+    stream.on_recv(recv_callback)
+    ioloop.IOLoop.instance().start()
 
     # Normally don't get here without user exit or error
     logger.log("DEBUG", f"Exited polling loop")
 
 
 if __name__ == "__main__":
-    ib_client_thread()
+    msg_client()

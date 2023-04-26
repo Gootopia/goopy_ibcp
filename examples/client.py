@@ -34,7 +34,7 @@ def ib_client_thread():
         logger.log("DEBUG", f"General Exception: {e.strerror} ({e.errno})")
 
     #
-    client.register_socket_msg_listener(socket_ib, msg_subscription)
+    client.register_listener(socket_ib, msg_subscription)
     logger.log("DEBUG", f"Registering msg '{msg_subscription}'")
 
     logger.log("DEBUG", f"Entering polling loop")
