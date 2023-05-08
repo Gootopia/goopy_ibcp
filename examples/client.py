@@ -27,7 +27,7 @@ def ib_client_thread():
 
     # Create a new socket connection with this client. Can add multiple sockets per client if needed.
     try:
-        client.add_socket(socket_ib, connection)
+        client._add_socket(socket_ib, connection)
     except zmq.ZMQError as e:
         logger.log("DEBUG", f"ZMQ Error: {e.strerror} ({e.errno})")
     except Exception as e:

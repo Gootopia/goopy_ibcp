@@ -63,7 +63,7 @@ class ClientPortalWebsocketsBase:
             logger.log("DEBUG", f"Exception:{e}")
 
         finally:
-            pass
+            logger.log("DEBUG", f"Exited loop.")
 
     async def send(self, msg):
         """Websocket send. Automatic logging of transmitted data."""

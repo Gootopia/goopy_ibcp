@@ -1,6 +1,7 @@
 """zmq message client."""
 import zmq
 import zmq.asyncio
+from zmq.eventloop.zmqstream import ZMQStream
 from loguru import logger
 
 
@@ -22,7 +23,17 @@ class ZmqClient:
         return (zmq_version, pyzmq_version)
 
     @classmethod
-    def register_listener(cls, socket_name: str, msg: str):
+    def register_listener_stream(
+        cls, name: str, address: str, msg: str, on_recv_callback
+    ):
+        """Register a listener stream."""
+        new_socket = cls._add_socket(name, address)
+        cls._register_listener(name, msg)
+        new_stream = ZMQStream(new_socket)
+        new_stream.on_recv(on_recv_callback)
+
+    @classmethod
+    def _register_listener(cls, socket_name: str, msg: str):
         """Subscribe to a message on a given named socket."""
         if socket_name in cls.sockets.keys():
             socket = cls.sockets[socket_name]
@@ -33,12 +44,25 @@ class ZmqClient:
             raise KeyError(f"No socket named: '{socket_name}'")
 
     @classmethod
-    def add_socket(cls, name: str, address="tcp://*:5555"):
+    def _add_socket(cls, name: str, address="tcp://*:5555"):
         """Add a new socket to the client test2."""
-        new_socket = cls.global_context.socket(zmq.SUB)
-        new_socket.connect(address)
-        log_msg = f"New socket '{name}' with address '{address}'"
-        logger.log("DEBUG", log_msg)
+        try:
+            log_msg = f"Creating subscriber socket '{name}' with address '{address}'"
+            logger.log("DEBUG", log_msg)
+            new_socket = cls.global_context.socket(zmq.SUB)
+            new_socket.connect(address)
+
+        except zmq.ZMQError as e:
+            log_msg = f"Zmq exception while creating socket: {e}"
+
+        except Exception as e:
+            pass
+
+        else:
+            log_msg = f"Socket created."
+
+        finally:
+            logger.log("DEBUG", log_msg)
 
         cls.sockets[name] = new_socket
         return new_socket
