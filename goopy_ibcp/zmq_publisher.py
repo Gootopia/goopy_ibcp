@@ -1,23 +1,45 @@
 """zmq message publisher."""
-
 import zmq
-from datetime import datetime
+from loguru import logger
 
 
 class ZmqPublisher:
-    """zmq publisher."""
-
-    context = None
+    """zmq publisher.
+    Requirements:
+    1) Format is "topic&&{json_msg}"
+    2) Payloads cannot be empty
+    """
 
     def __init__(self, binding="tcp://*:5555"):
+        """Our constructor."""
         self.context = zmq.Context()
+        logger.log(
+            "DEBUG",
+            f"New ZMQ Publisher (zmq,pyzmq)=({zmq.zmq_version()},{zmq.pyzmq_version()})",
+        )
         self.binding = binding
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind(binding)
-        self.tick_last = 0
 
-    def publish(self, msg):
-        tick_time = datetime.now()
-        xmit_msg = f"{tick_time}"
-        result = self.socket.send_string(msg)
-        # print(f"{tick_time}:{tick_symbol}={self.tick_last} (Result={result})")
+    @staticmethod
+    def check_msg_format(msg):
+        """Pre-check prior to transmission."""
+        if msg is None:
+            return False
+
+        # Currently we are only using human readable strings as payloads
+        if isinstance(msg, str) is False:
+            return False
+
+        return True
+
+    def publish_string(self, msg):
+        """Transmit string via zmq socket."""
+        if ZmqPublisher.check_msg_format(msg) is True:
+            try:
+                # TODO: Error checking of return results
+                result = self.socket.send_string(msg)
+            except Exception as e:
+                raise e
+        else:
+            return False
