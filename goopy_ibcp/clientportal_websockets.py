@@ -141,16 +141,16 @@ class ClientPortalWebsocketsBase:
 
                     # Don't know what message type is yet, so just use base and extract the topic
                     new_msg_dict = IBMsgConverter.create_dict_from_raw_msg(msg_raw)
-                    new_msg_topic = new_msg_dict["topic"]
+                    new_msg_topic = new_msg_dict[IBTopic.Topic]
 
                     # If a handler is available, we'll get a specific message dictionary returned to us
-                    new_msg_dict = IBTopic.process_topic(
+                    handled_msg_dict = IBTopic.process_topic(
                         new_msg_topic, self.msg_handlers, msg_raw
                     )
 
                     # Only transmit packets that were handled
-                    if new_msg_dict is not None:
-                        new_json_packet = JSONPacket(new_msg_topic, new_msg_dict)
+                    if handled_msg_dict is not None:
+                        new_json_packet = JSONPacket(new_msg_topic, handled_msg_dict)
                         xmit_msg = new_json_packet.build_packet()
                         self.publisher.publish_string(xmit_msg)
                         logger.log("DEBUG", f"Transmitted: {xmit_msg}")
@@ -189,7 +189,16 @@ class ClientPortalWebsocketsBase:
         # Short sleep to let things get connected...TBD needed? Better way?
         await asyncio.sleep(5)
         logger.log("DEBUG", f"Start ReqData")
+
+        # Example request just to get a tick stream started
         await self.send('smd+551601544+{"fields":["31", "84", "86"]}')
+        logger.log("DEBUG", f"Sent streaming data request")
+
+        # Example request to initiate historical data gathering
+        await self.send(
+            'smq+551601544+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
+        )
+        logger.log("DEBUG", f"Sent historical data request")
         logger.log("DEBUG", f"Exit ReqData")
 
     async def __async_loop(self):

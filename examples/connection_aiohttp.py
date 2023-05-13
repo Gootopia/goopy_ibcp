@@ -10,6 +10,7 @@ async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
     # r = await client_http.clientrequest_validate()
+
     r = await client_http.clientrequest_user()
     r = await client_http.clientrequest_portfolio_accounts()
     r = await client_http.clientrequest_validate()

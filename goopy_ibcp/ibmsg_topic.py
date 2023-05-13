@@ -6,6 +6,7 @@ class IBTopic:
     IB includes topics in JSON strings as a name/value pair "topic":"{topicvalue}"
     """
 
+    Topic: str = "topic"
     # Marketdata arrives from IB via "smd+{conid} topics"
     MarketData: str = "smd"
     System: str = "system"
