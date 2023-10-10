@@ -13,13 +13,11 @@ async def main_http():
 
     r = await client_http.clientrequest_user()
     r = await client_http.clientrequest_authentication_status()
+    r = await client_http.clientrequest_server_accounts()
+    r = await client_http.clientrequest_portfolio_accounts()
     r = await client_http.clientrequest_switch_account()
     r = await client_http.clientrequest_trades()
-    r = await client_http.clientrequest_portfolio_accounts()
     r = await client_http.clientrequest_validate()
-    r = await client_http.clientrequest_authentication_status()
-    r = await client_http.clientrequest_server_accounts()
-    r = await client_http.clientrequest_trades()
     await asyncio.sleep(5)
 
     while True:
