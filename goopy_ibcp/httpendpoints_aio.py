@@ -1,6 +1,8 @@
 from json import JSONDecodeError
 import aiohttp
 import asyncio
+import json
+import xmltodict
 
 from loguru import logger
 
@@ -43,9 +45,17 @@ class HttpEndpointsAio(Watchdog):
         if disable_request_warnings:
             pass
 
-    async def clientrequest_get(self, endpoint="", params=None):
-        """Gateway Get message request using desired endpoint."""
-        result = await self.__request(method="GET", endpoint=endpoint, params=params)
+    async def clientrequest_get(self, endpoint="", params=None, is_ib_endpoint=True):
+        """Gateway Get message request using desired endpoint.
+        If we want to use something other than IB Client URL, set is_ib_endpoint to False and provide the
+        desired URL in the endpoint parameter
+        """
+        result = await self.__request(
+            method="GET",
+            endpoint=endpoint,
+            params=params,
+            is_ib_endpoint=is_ib_endpoint,
+        )
         return result
 
     async def clientrequest_post(self, endpoint="", params=None):
@@ -58,9 +68,17 @@ class HttpEndpointsAio(Watchdog):
         return url
 
     @logger.catch
-    async def __request(self, method: str = "GET", endpoint: str = "", params=None):
+    async def __request(
+        self, method: str = "GET", endpoint: str = "", params=None, is_ib_endpoint=True
+    ):
         result = RequestResult()
-        result.url = self.__build_endpoint_url(endpoint)
+
+        # Normally, URL are IB client endpoints but for FlexQueries (or any other non-IB URL),
+        # we use whatever the user provides in the endpoint string as the full URL
+        if is_ib_endpoint is True:
+            result.url = self.__build_endpoint_url(endpoint)
+        else:
+            result.url = endpoint
 
         logger.log("DEBUG", f"{method}-REQUEST({endpoint}), params={params}")
 
@@ -77,9 +95,30 @@ class HttpEndpointsAio(Watchdog):
                     # params=params,
                     json=params,
                 ) as response:
-                    result.json = await response.json(content_type=None)
+                    # Save the raw string in case we need it.
+                    result.raw = await response.text()
+
+                    # Flex Queries return XML content. Others return JSON
+                    if response.content_type == "text/xml":
+                        result.dict = xmltodict.parse(result.raw)
+                        result.json = json.dumps(result.dict)
+                    else:
+                        result.json = await response.json(content_type=None)
 
                     self.count_packets = self.count_packets + 1
+
+                    # Check returns. 200=good. Others indicate errors
+                    if response.status == 200:
+                        result.error = Error.No_Error
+
+                    elif response.status == 401:
+                        result.error = Error.Err_Connection_Incomplete_WebRequest_401
+
+                    elif response.status == 403:
+                        result.error = Error.Err_Connection_Unauthorized_Web_Request_403
+
+                    else:
+                        result.error = Error.Err_Connection_Unhandled_Web_Error
                     logger.log("DEBUG", f"RESPONSE ({response.status}): {result.json}")
                     logger.log(
                         "DEBUG",
@@ -96,6 +135,13 @@ class HttpEndpointsAio(Watchdog):
         except asyncio.exceptions.TimeoutError as e:
             logger.log("DEBUG", f"Timeout: {method} after {self.request_timeout_sec}")
             self.count_timeouts = self.count_timeouts + 1
+
+        # Can't talk to the ClientPortal gateway. May not be running?
+        except aiohttp.ClientConnectionError as e:
+            logger.log(
+                "DEBUG", f"Can't connect to ClientPortal. Verify Gateway is running!"
+            )
+            result.error = Error.Err_Connection_No_Gateway
 
         # Any exceptions and return will be passed off to __error_check for handling
         except Exception as e:

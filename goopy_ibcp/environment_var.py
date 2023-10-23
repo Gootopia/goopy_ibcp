@@ -12,3 +12,4 @@ Note: These can be set as follows:
 class Environment_Var:
     # Account which is used to place orders, read trades, etc.
     IB_ACTIVE_ACCOUNT: str = "IB_ACTIVE_ACCOUNT"
+    IB_FLEXQUERY_TOKEN: str = "IB_FLEXQUERY_TOKEN"

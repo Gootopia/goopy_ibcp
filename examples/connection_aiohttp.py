@@ -1,29 +1,41 @@
 import asyncio
+
 from loguru import logger
 
 from goopy_ibcp.clientportal_http_aio import ClientPortalHttpAio
 from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
+from goopy_ibcp.ibparser import IBParser
+from goopy_ibcp.error import Error
+from goopy_ibcp.environment_var import Environment_Var
 
 
 @logger.catch
 async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
-    # r = await client_http.clientrequest_validate()
 
+    r = await client_http.clientrequest_flexquery_request(queryid="868069")
     r = await client_http.clientrequest_user()
-    r = await client_http.clientrequest_authentication_status()
-    r = await client_http.clientrequest_server_accounts()
-    r = await client_http.clientrequest_portfolio_accounts()
-    r = await client_http.clientrequest_switch_account()
-    r = await client_http.clientrequest_trades()
-    r = await client_http.clientrequest_validate()
-    await asyncio.sleep(5)
 
-    while True:
-        await client_http.clientrequest_marketdata("495512572", "31")
-        await client_http.clientrequest_validate()
+    if r.error is Error.No_Error:
+        accounts, err = IBParser.get_accounts(r.json)
+
+        r = await client_http.clientrequest_authentication_status()
+        r = await client_http.clientrequest_server_accounts()
+        r = await client_http.clientrequest_portfolio_accounts()
+        r = await client_http.clientrequest_switch_account(
+            Environment_Var.IB_ACTIVE_ACCOUNT
+        )
+        r = await client_http.clientrequest_trades()
+        trades, err = IBParser.get_trades(r.json)
+
+        r = await client_http.clientrequest_validate()
         await asyncio.sleep(5)
+
+        while True:
+            await client_http.clientrequest_marketdata("495512572", "31")
+            await client_http.clientrequest_validate()
+            await asyncio.sleep(5)
 
 
 @logger.catch

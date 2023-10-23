@@ -2,9 +2,12 @@ import os
 from overrides import overrides
 from loguru import logger
 
+
 from goopy_ibcp.endpoints import Endpoints
+from goopy_ibcp.error import Error
 from goopy_ibcp.httpendpoints_aio import HttpEndpointsAio
 from goopy_ibcp.environment_var import Environment_Var
+from goopy_ibcp.ibflexquery3 import IBFlexQuery3
 
 
 class ClientPortalHttpAio(HttpEndpointsAio):
@@ -135,6 +138,60 @@ class ClientPortalHttpAio(HttpEndpointsAio):
 
         params = {"acctId": account}
         return await self.clientrequest_post(Endpoints.Account.value, params=params)
+
+    async def clientrequest_flexquery_request(self, queryid: str = None):
+        """Initiate a flex query request. NOTE: No need to be actively logged in
+        Parameters:
+            QueryID = IB Assigned number for the flex query (not the name)
+            This function uses system environment variables to protect user information
+        """
+        envar = Environment_Var.IB_FLEXQUERY_TOKEN
+        token = os.environ.get(envar, None)
+
+        # Don't bother to call if token is not set
+        if token is None:
+            logger.log(
+                "DEBUG",
+                f"System environmental variable '{envar}' not set. No valid IB generated Token!",
+            )
+            return None
+
+        flexquery_url = f"{IBFlexQuery3.QueryURL}&t={token}&q={queryid}&v=3"
+        r = await self.clientrequest_get(flexquery_url, is_ib_endpoint=False)
+
+        try:
+            r_xml = r.dict[IBFlexQuery3.XMLFields.FlexStatementResponse]
+
+            # Normally status should be present, but if there is an issue with the request it may not be
+            if IBFlexQuery3.XMLFields.Status not in r_xml:
+                code = r_xml[IBFlexQuery3.XMLFields.NonVersion3Error]
+                logger.log("DEBUG", f"Flex Query Error: '{code}'")
+                r.error = Error.Err_FlexQuery_Invalid_Request
+
+            else:
+                status = r_xml[IBFlexQuery3.XMLFields.Status]
+
+                if status == IBFlexQuery3.XMLFields.Result_Status.Success:
+                    refcode = r_xml[IBFlexQuery3.XMLFields.ReferenceCode]
+                    url = r_xml[IBFlexQuery3.XMLFields.Url]
+                    statement_url = f"{url}&t={token}&q={refcode}&v=3"
+                    r = await self.clientrequest_get(
+                        statement_url, is_ib_endpoint=False
+                    )
+                    pass
+
+                else:
+                    pass
+
+        except KeyError as e:
+            logger.log("DEBUG", f"Unknown FlexQuery key: '{e.args[0]}'")
+            r.error = Error.Err_FlexQuery_Key_Not_Found
+
+        except Exception as e:
+            logger.log("DEBUG", f"Exception during FlexQuery: {e}")
+            r.error = Error.Unhandled_Exception
+
+        return r
 
 
 if __name__ == "__main__":
