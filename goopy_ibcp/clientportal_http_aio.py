@@ -173,8 +173,13 @@ class ClientPortalHttpAio(HttpEndpointsAio):
 
                 if status == IBFlexQuery3.XMLFields.Result_Status.Success:
                     refcode = r_xml[IBFlexQuery3.XMLFields.ReferenceCode]
+
+                    # url is for info purposes only
                     url = r_xml[IBFlexQuery3.XMLFields.Url]
-                    statement_url = f"{url}&t={token}&q={refcode}&v=3"
+
+                    statement_url = (
+                        f"{IBFlexQuery3.GetStatementURL}&t={token}&q={refcode}&v=3"
+                    )
                     r = await self.clientrequest_get(
                         statement_url, is_ib_endpoint=False
                     )

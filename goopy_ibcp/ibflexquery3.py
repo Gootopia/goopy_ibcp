@@ -9,12 +9,18 @@ See this page: https://www.ibkrguides.com/brokerportal/flex3.htm
 class IBFlexQuery3:
     """IB Flex Queries"""
 
-    # Format is: https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest?t=TOKEN&q=QUERY&v=3
+    # Request Format: https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest?t=TOKEN&q=QUERY&v=3
     # where:
-    # TOKEN is the IB Clientportal generated web-token
-    # QUERY is the IB Clientportal generated code for the desired FlexQuery
+    #   TOKEN is the IB Clientportal generated web-token
+    #   QUERY is the IB Clientportal generated code for the desired FlexQuery
     # NOTE: A successful response will contain the GetStatement URL so we'll use that rather than hard-define
+    # GetStatement Format: https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/GetStatement?t=TOKEN&q=REF_CODE&v=3
+    # where:
+    #   TOKEN is the IB Clientportal generated web-token
+    #   REF_CODE is found in the reply from Request Format call
+
     QueryURL: str = "https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest?"
+    GetStatementURL: str = "https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/GetStatement?"
 
     class XMLFields:
         """XML fields returned via a FlexQuery Response
