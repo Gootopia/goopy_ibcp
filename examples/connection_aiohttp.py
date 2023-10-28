@@ -39,18 +39,6 @@ async def main_http():
             await asyncio.sleep(5)
 
 
-@logger.catch
-def main_ws() -> None:
-    logger.add("testlog.log")
-
-    client_ws = ClientPortalWebsocketsBase()
-    client_ws.loop()
-
-
 if __name__ == "__main__":
-    # event loop for the demos (websocket or http)
     loop = asyncio.get_event_loop()
-
-    # Uncomment one or the other (not both) to run ws/http
-    # loop.run_until_complete(main_ws())
     loop.run_until_complete(main_http())

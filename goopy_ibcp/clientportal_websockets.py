@@ -174,7 +174,7 @@ class ClientPortalWebsocketsBase:
             try:
                 while True:
                     await self.send("tic")
-                    await self.send('smd+551601544+{"fields":["31"]}')
+
                     logger.log("DEBUG", f"Send Heartbeat {self.heartbeat_sec}s")
                     await asyncio.sleep(self.heartbeat_sec)
 
@@ -196,7 +196,7 @@ class ClientPortalWebsocketsBase:
 
         # Example request to initiate historical data gathering
         await self.send(
-            'smq+551601544+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
+            'smh+551601544+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
         )
         logger.log("DEBUG", f"Sent historical data request")
         logger.log("DEBUG", f"Exit ReqData")
@@ -220,5 +220,15 @@ class ClientPortalWebsocketsBase:
             logger.log("DEBUG", f"Exited Async Loop")
 
 
+@logger.catch
+def main_ws() -> None:
+    logger.add("testlog.log")
+
+    client_ws = ClientPortalWebsocketsBase()
+    client_ws.loop()
+
+
 if __name__ == "__main__":
-    print("=== IB Client Portal Websockets ===")
+    # event loop
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main_ws())
