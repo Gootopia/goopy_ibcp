@@ -3,6 +3,8 @@ import aiohttp
 import asyncio
 import json
 import xmltodict
+import pandas
+import io
 
 from loguru import logger
 
@@ -98,13 +100,17 @@ class HttpEndpointsAio(Watchdog):
                     # Save the raw string in case we need it.
                     result.raw = await response.text()
 
-                    # Flex Queries return XML content. Others return JSON
+                    # Flex Queries can return a variety of content. Will expand as we get different types
+                    # For now, it's best to select "XML" as the data type when creating the Flex Query
                     if response.content_type == "text/xml":
                         result.dict = xmltodict.parse(result.raw)
                         result.json = json.dumps(result.dict)
+                    elif response.content_type == "text/plain":
+                        pass
                     else:
                         result.json = await response.json(content_type=None)
 
+                    # Packet counter just for info purposes
                     self.count_packets = self.count_packets + 1
 
                     # Check returns. 200=good. Others indicate errors
@@ -143,7 +149,7 @@ class HttpEndpointsAio(Watchdog):
             )
             result.error = Error.Err_Connection_No_Gateway
 
-        # Any exceptions and return will be passed off to __error_check for handling
+        # Log all received exceptions. We may handle other specific ones as they arise
         except Exception as e:
             self.count_exceptions = self.count_exceptions + 1
             logger.log("DEBUG", f"EXCEPTION: {e}")

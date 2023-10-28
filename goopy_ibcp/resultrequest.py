@@ -9,6 +9,8 @@ class RequestResult:
     url: str = ""
     # Decoded message for error
     error = Error.No_Error
+    # Addition error info
+    errorMsg = None
     # Client portal Web Error Code
     statusCode = 0
     # Client Portal JSON response string

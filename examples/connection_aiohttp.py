@@ -14,7 +14,8 @@ async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
 
-    r = await client_http.clientrequest_flexquery_request(queryid="868069")
+    r = await client_http.clientrequest_flexquery_request(queryid="873489")
+    r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
 
     if r.error is Error.No_Error:

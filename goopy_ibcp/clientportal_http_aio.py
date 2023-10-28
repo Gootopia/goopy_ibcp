@@ -176,16 +176,22 @@ class ClientPortalHttpAio(HttpEndpointsAio):
 
                     # url is for info purposes only
                     url = r_xml[IBFlexQuery3.XMLFields.Url]
+                    received_url = f"{url}&t={token}&q={refcode}&v=3"
 
                     statement_url = (
                         f"{IBFlexQuery3.GetStatementURL}&t={token}&q={refcode}&v=3"
                     )
+
                     r = await self.clientrequest_get(
                         statement_url, is_ib_endpoint=False
                     )
-                    pass
 
                 else:
+                    errorCode = r_xml[IBFlexQuery3.XMLFields.ErrorCode]
+                    errorMessage = r_xml[IBFlexQuery3.XMLFields.ErrorMessage]
+                    logger.log(
+                        "DEBUG", f"FlexQuery error({errorCode})-'{errorMessage}'"
+                    )
                     pass
 
         except KeyError as e:
