@@ -3,7 +3,6 @@ import asyncio
 from loguru import logger
 
 from goopy_ibcp.clientportal_http_aio import ClientPortalHttpAio
-from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
 from goopy_ibcp.ibparser import IBParser
 from goopy_ibcp.error import Error
 from goopy_ibcp.environment_var import Environment_Var
@@ -14,8 +13,8 @@ async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
 
-    r = await client_http.clientrequest_flexquery_request(queryid="873489")
-    r = await client_http.clientrequest_flexquery_request(queryid="873480")
+    # r = await client_http.clientrequest_flexquery_request(queryid="873489")
+    # r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
 
     if r.error is Error.No_Error:

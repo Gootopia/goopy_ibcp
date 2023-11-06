@@ -4,7 +4,8 @@ import urllib3
 
 from loguru import logger
 
-from goopy_misc.watchdog import Watchdog
+# from goopy_misc.watchdog import Watchdog
+from goopy_ibcp.watchdog import Watchdog
 from goopy_ibcp.error import Error
 from goopy_ibcp.resultrequest import RequestResult
 

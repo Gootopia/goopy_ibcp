@@ -3,12 +3,11 @@ import aiohttp
 import asyncio
 import json
 import xmltodict
-import pandas
-import io
 
 from loguru import logger
 
-from goopy_misc.watchdog import Watchdog
+# from goopy_misc.watchdog import Watchdog
+from goopy_ibcp.watchdog import Watchdog
 from goopy_ibcp.error import Error
 from goopy_ibcp.resultrequest import RequestResult
 
