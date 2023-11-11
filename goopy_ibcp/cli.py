@@ -21,7 +21,7 @@ def launch(
     ib_interface: str = typer.Argument("Websocket", help="interface help"),
 ):
     """Launch Websocket or HTTP ClientPortal interface (does not return)"""
-    print(f"Launching {ib_interface}")
+    print(f"Launching {ib_interface} (Coming Soon!)")
 
 
 if __name__ == "__main__":

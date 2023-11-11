@@ -12,7 +12,12 @@ from goopy_ibcp.environment_var import Environment_Var
 async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
+    conid = "586139726"
+    msg = 'smd+586139726+{"fields":["31", "84", "86"]}'
 
+    topic = f"smd+{conid}"
+    fields = '{"fields":["31", "84", "86"]}'
+    msg1 = f"{topic}+{fields}"
     # r = await client_http.clientrequest_flexquery_request(queryid="873489")
     # r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
