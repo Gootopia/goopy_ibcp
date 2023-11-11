@@ -1,32 +1,39 @@
 import pytest
 from unittest.mock import patch
 
-from goopy_certificate.certificate import CertificateError, CertificateReturn
-from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase, ClientPortalWebsocketsError
+# from goopy_certificate.certificate import CertificateError, CertificateReturn
+from goopy_ibcp.certificate import CertificateError, CertificateReturn
+from goopy_ibcp.clientportal_websockets import (
+    ClientPortalWebsocketsBase,
+    ClientPortalWebsocketsError,
+)
 
-# TODO: Fix all the patch definitions following
 
-@patch('goopy_ibcp.clientportal_websockets.Certificate.get_certificate')
+@patch("goopy_ibcp.clientportal_websockets.Certificate.get_certificate")
 class TestClientPortalWebsockets:
     @staticmethod
-    def url_validator_ok(url=''):
-        """ Simulate checking a URL and finding it valid """
+    def url_validator_ok(url=""):
+        """Simulate checking a URL and finding it valid"""
         return True
 
     @staticmethod
-    def url_validator_invalid(url=''):
-        """ Simulate checking a URL and finding it bad """
+    def url_validator_invalid(url=""):
+        """Simulate checking a URL and finding it bad"""
         return False
 
     @pytest.mark.asyncio
     async def test_open_connection_invalid_url(self, patched):
         cp = ClientPortalWebsocketsBase()
-        result = await cp.__open_connection(url_validator=TestClientPortalWebsockets.url_validator_invalid)
+        result = await cp.__open_connection(
+            url_validator=TestClientPortalWebsockets.url_validator_invalid
+        )
         assert result == ClientPortalWebsocketsError.Invalid_URL
 
     @pytest.mark.asyncio
     async def test_open_connection_invalid_certificate(self, patched):
-        patched.return_value = CertificateReturn(None, CertificateError.Invalid_Certificate)
+        patched.return_value = CertificateReturn(
+            None, CertificateError.Invalid_Certificate
+        )
         cp = ClientPortalWebsocketsBase()
         result = await cp.__open_connection()
         assert result == ClientPortalWebsocketsError.Invalid_Certificate

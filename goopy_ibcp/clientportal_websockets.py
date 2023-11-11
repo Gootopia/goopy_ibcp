@@ -3,10 +3,11 @@ import websockets
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from loguru import logger
-import json
 
 from goopy_ibcp.zmq_publisher import ZmqPublisher
-from goopy_certificate.certificate import Certificate, CertificateError
+
+# from goopy_certificate.certificate import Certificate, CertificateError
+from goopy_ibcp.certificate import Certificate, CertificateError
 from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
 from goopy_ibcp.ibmsg import IBMsgConverter
 from goopy_ibcp.jsonpacket import JSONPacket
@@ -174,7 +175,7 @@ class ClientPortalWebsocketsBase:
             try:
                 while True:
                     await self.send("tic")
-                    await self.send('smd+551601544+{"fields":["31"]}')
+
                     logger.log("DEBUG", f"Send Heartbeat {self.heartbeat_sec}s")
                     await asyncio.sleep(self.heartbeat_sec)
 
@@ -190,14 +191,21 @@ class ClientPortalWebsocketsBase:
         await asyncio.sleep(5)
         logger.log("DEBUG", f"Start ReqData")
 
+        # Contract ID
+        # MES, Dec 2023
+        # Refer to https://misc.interactivebrokers.com/cstools/contract_info/v3.10/index.php?action=Conid
+        # NOTE: If you are logged into the main account, the paper account will not transmit quote data
+        # You can usually tell this if you subscribe and get one updated message but no quote data
+        conid = "586139726"
+
         # Example request just to get a tick stream started
-        await self.send('smd+551601544+{"fields":["31", "84", "86"]}')
+        await self.send('smd+586139726+{"fields":["31", "84", "86"]}')
         logger.log("DEBUG", f"Sent streaming data request")
 
         # Example request to initiate historical data gathering
-        await self.send(
-            'smq+551601544+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
-        )
+        # await self.send(
+        #    'smh+586139726+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
+        # )
         logger.log("DEBUG", f"Sent historical data request")
         logger.log("DEBUG", f"Exit ReqData")
 
@@ -212,7 +220,6 @@ class ClientPortalWebsocketsBase:
                     self.__websocket_reqdata(),
                     self.__websocket_heartbeat(),
                 )
-
         except Exception as e:
             logger.log("DEBUG", f"EXCEPTION: {e}")
 
@@ -220,5 +227,16 @@ class ClientPortalWebsocketsBase:
             logger.log("DEBUG", f"Exited Async Loop")
 
 
+@logger.catch
+def main_ws() -> None:
+    logger.add("testlog.log")
+
+    client_ws = ClientPortalWebsocketsBase()
+    client_ws.loop()
+
+
 if __name__ == "__main__":
-    print("=== IB Client Portal Websockets ===")
+    # Example to start an infinite event loop which handles websocket messages
+    # Refer to _async_loop for more details on specific threads
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main_ws())
