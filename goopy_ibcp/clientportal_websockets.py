@@ -7,6 +7,7 @@ from loguru import logger
 from goopy_ibcp.zmq_publisher import ZmqPublisher
 
 # from goopy_certificate.certificate import Certificate, CertificateError
+from goopy_ibcp.ibfieldmapper import IBFieldMapper
 from goopy_ibcp.certificate import Certificate, CertificateError
 from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
 from goopy_ibcp.ibmsg import IBMsgConverter
@@ -22,6 +23,7 @@ class ClientPortalWebsocketsError(Enum):
     Invalid_URL = 2
     Invalid_Certificate = 3
     Connection_Failed = 4
+    Invalid_Conid = 5
 
 
 # TODO: Document ClientPortalWebsocketsBase class
@@ -51,6 +53,49 @@ class ClientPortalWebsocketsBase:
         self.msg_handlers[
             IBTopic.MarketData
         ] = IBMsgConverterTick.create_dict_from_raw_msg
+
+    @staticmethod
+    def _build_ws_str_smd(conid: str, ticks: list) -> str:
+        """Helper string to build up subscriptionstrings IB websocket understands
+        Refer to: https://interactivebrokers.github.io/cpwebapi/websockets for formats
+        """
+        # conid are always an integer
+        if conid.isdigit() is False:
+            return ClientPortalWebsocketsError.Invalid_Conid
+
+        topic = f"smd+{conid}"
+        fields = '{"fields":}' + str(f"{ticks}")
+        ticks = ",".join([f'"{str(tick)}"' for tick in ticks])
+        smd_string = f'{topic}+{{"fields":[{ticks}]}}'
+        return ClientPortalWebsocketsError.Ok, smd_string
+
+    @staticmethod
+    def _check_tick_types(ticks_requested: list) -> list:
+        """Helper function to only pass valid tick types."""
+        ticks_used = []
+
+        if IBFieldMapper.Price_Ask in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Ask)
+
+        if IBFieldMapper.Price_Bid in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Bid)
+
+        if IBFieldMapper.Price_Close in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Close)
+
+        if IBFieldMapper.Price_High in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_High)
+
+        if IBFieldMapper.Price_Last in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Last)
+
+        if IBFieldMapper.Price_Low in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Low)
+
+        if IBFieldMapper.Price_Open in ticks_requested:
+            ticks_used.append(IBFieldMapper.Price_Open)
+
+        return ticks_used
 
     def loop(self):
         """Start websocket message handler and heartbeat"""
@@ -199,6 +244,8 @@ class ClientPortalWebsocketsBase:
         conid = "586139726"
 
         # Example request just to get a tick stream started
+        topic = f"smd+{conid}"
+        fields = f'{"fields":["31", "84", "86"]}'
         await self.send('smd+586139726+{"fields":["31", "84", "86"]}')
         logger.log("DEBUG", f"Sent streaming data request")
 

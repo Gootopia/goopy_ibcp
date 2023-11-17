@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 # from goopy_certificate.certificate import CertificateError, CertificateReturn
 from goopy_ibcp.certificate import CertificateError, CertificateReturn
+from goopy_ibcp.ibfieldmapper import IBFieldMapper
 from goopy_ibcp.clientportal_websockets import (
     ClientPortalWebsocketsBase,
     ClientPortalWebsocketsError,
@@ -11,6 +12,8 @@ from goopy_ibcp.clientportal_websockets import (
 
 @patch("goopy_ibcp.clientportal_websockets.Certificate.get_certificate")
 class TestClientPortalWebsockets:
+    """Test class for Clienportal Websockets"""
+
     @staticmethod
     def url_validator_ok(url=""):
         """Simulate checking a URL and finding it valid"""
@@ -20,6 +23,51 @@ class TestClientPortalWebsockets:
     def url_validator_invalid(url=""):
         """Simulate checking a URL and finding it bad"""
         return False
+
+    def test_build_smd_string_good(self, patched):
+        """Verify we can make a good string from test info"""
+        conid = "12345678"
+        tick_types = ["12", "13", "14"]
+        # Note that these aren't valid tick types or conid, but right now we only care about format
+        good_str = 'smd+12345678+{"fields":["12","13","14"]}'
+        result, smd_str = ClientPortalWebsocketsBase._build_ws_str_smd(
+            conid, tick_types
+        )
+        assert result == ClientPortalWebsocketsError.Ok
+        assert smd_str == good_str
+
+    def test_build_smd_string_bad_conid(self, patched):
+        """Check that we pass only a numeral as conid"""
+        conid = "bad"
+        result = ClientPortalWebsocketsBase._build_ws_str_smd(conid, None)
+        assert result == ClientPortalWebsocketsError.Invalid_Conid
+
+    def test_tick_types_good(self, patched):
+        """Check that we ignore any unknown tick types"""
+        ticks_requested = [
+            "99",
+            IBFieldMapper.Price_Ask,
+            "garbage",
+            IBFieldMapper.Price_Bid,
+            IBFieldMapper.Price_Close,
+            "junk",
+            None,
+            12345,
+            IBFieldMapper.Price_High,
+            IBFieldMapper.Price_Last,
+            IBFieldMapper.Price_Low,
+            IBFieldMapper.Price_Open,
+        ]
+        ticks_used = ClientPortalWebsocketsBase._check_tick_types(ticks_requested)
+
+        # Only valid types should show up in the return
+        assert IBFieldMapper.Price_Ask in ticks_used
+        assert IBFieldMapper.Price_Bid in ticks_used
+        assert IBFieldMapper.Price_Close in ticks_used
+        assert IBFieldMapper.Price_High in ticks_used
+        assert IBFieldMapper.Price_Last in ticks_used
+        assert IBFieldMapper.Price_Low in ticks_used
+        assert IBFieldMapper.Price_Open in ticks_used
 
     @pytest.mark.asyncio
     async def test_open_connection_invalid_url(self, patched):
