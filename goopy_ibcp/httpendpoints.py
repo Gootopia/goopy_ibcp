@@ -140,7 +140,7 @@ class HttpEndpoints(Watchdog):
             result.error = Error.Connection_or_Timeout
             logger.log("DEBUG", f"{exception}")
 
-        if result.error != Error.No_Error:
+        if result.error != Error.Ok:
             logger.log(
                 "DEBUG", f"{cpurl}: Error={result.error}, Status={result.statusCode}"
             )

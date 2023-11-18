@@ -13,6 +13,7 @@ from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
 from goopy_ibcp.ibmsg import IBMsgConverter
 from goopy_ibcp.jsonpacket import JSONPacket
 from goopy_ibcp.ibmsg_topic import IBTopic
+from goopy_ibcp.error import Error
 
 
 class ClientPortalWebsocketsError(Enum):
@@ -199,7 +200,7 @@ class ClientPortalWebsocketsBase:
                         new_json_packet = JSONPacket(new_msg_topic, handled_msg_dict)
                         xmit_msg = new_json_packet.build_packet()
                         self.publisher.publish_string(xmit_msg)
-                        logger.log("DEBUG", f"Transmitted: {xmit_msg}")
+                        logger.log("DEBUG", f"Publishing: {xmit_msg}")
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
@@ -242,18 +243,21 @@ class ClientPortalWebsocketsBase:
         # NOTE: If you are logged into the main account, the paper account will not transmit quote data
         # You can usually tell this if you subscribe and get one updated message but no quote data
         conid = "586139726"
+        ticks = [IBFieldMapper.Price_Last]
 
         # Example request just to get a tick stream started
-        topic = f"smd+{conid}"
-        fields = f'{"fields":["31", "84", "86"]}'
-        await self.send('smd+586139726+{"fields":["31", "84", "86"]}')
-        logger.log("DEBUG", f"Sent streaming data request")
+        result, ws_str = self._build_ws_str_smd(conid, ticks)
+        if result == ClientPortalWebsocketsError.Ok:
+            await self.send(ws_str)
+            logger.log("DEBUG", f"Sent streaming data request")
+        else:
+            logger.log("DEBUG", f"Websocket string error: {result}")
 
         # Example request to initiate historical data gathering
         # await self.send(
         #    'smh+586139726+{"period": "1d","bar": "1min", "source": "trades","format": "%c", "outsideRth":true, "since":"20230510-22:00:00}'
         # )
-        logger.log("DEBUG", f"Sent historical data request")
+        # logger.log("DEBUG", f"Sent historical data request")
         logger.log("DEBUG", f"Exit ReqData")
 
     async def __async_loop(self):

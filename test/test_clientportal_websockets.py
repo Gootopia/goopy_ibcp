@@ -10,21 +10,10 @@ from goopy_ibcp.clientportal_websockets import (
 )
 
 
-@patch("goopy_ibcp.clientportal_websockets.Certificate.get_certificate")
-class TestClientPortalWebsockets:
-    """Test class for Clienportal Websockets"""
+class TestClientPortalWebSocketsNotPatched:
+    """Test class for ClientPortalWebSockets methods that don't need patching"""
 
-    @staticmethod
-    def url_validator_ok(url=""):
-        """Simulate checking a URL and finding it valid"""
-        return True
-
-    @staticmethod
-    def url_validator_invalid(url=""):
-        """Simulate checking a URL and finding it bad"""
-        return False
-
-    def test_build_smd_string_good(self, patched):
+    def test_build_smd_string_good(self):
         """Verify we can make a good string from test info"""
         conid = "12345678"
         tick_types = ["12", "13", "14"]
@@ -36,13 +25,13 @@ class TestClientPortalWebsockets:
         assert result == ClientPortalWebsocketsError.Ok
         assert smd_str == good_str
 
-    def test_build_smd_string_bad_conid(self, patched):
+    def test_build_smd_string_bad_conid(self):
         """Check that we pass only a numeral as conid"""
         conid = "bad"
         result = ClientPortalWebsocketsBase._build_ws_str_smd(conid, None)
         assert result == ClientPortalWebsocketsError.Invalid_Conid
 
-    def test_tick_types_good(self, patched):
+    def test_tick_types_good(self):
         """Check that we ignore any unknown tick types"""
         ticks_requested = [
             "99",
@@ -68,6 +57,21 @@ class TestClientPortalWebsockets:
         assert IBFieldMapper.Price_Last in ticks_used
         assert IBFieldMapper.Price_Low in ticks_used
         assert IBFieldMapper.Price_Open in ticks_used
+
+
+@patch("goopy_ibcp.clientportal_websockets.Certificate.get_certificate")
+class TestClientPortalWebsocketsPatched:
+    """Test class for ClientPortalWebsockets methods which need patching"""
+
+    @staticmethod
+    def url_validator_ok(url=""):
+        """Simulate checking a URL and finding it valid"""
+        return True
+
+    @staticmethod
+    def url_validator_invalid(url=""):
+        """Simulate checking a URL and finding it bad"""
+        return False
 
     @pytest.mark.asyncio
     async def test_open_connection_invalid_url(self, patched):

@@ -8,7 +8,7 @@ class RequestResult:
     # request origin
     url: str = ""
     # Decoded message for error
-    error = Error.No_Error
+    error = Error.Ok
     # Addition error info
     errorMsg = None
     # Client portal Web Error Code

@@ -30,7 +30,7 @@ class IBParser:
         except Exception as e:
             return None, Error.Unhandled_Exception
 
-        return accounts, Error.No_Error
+        return accounts, Error.Ok
 
     @staticmethod
     def get_trades(jsonstr: str = None):
@@ -55,4 +55,4 @@ class IBParser:
         except Exception as e:
             return None, Error.Unhandled_Exception
 
-        return trades, Error.No_Error
+        return trades, Error.Ok

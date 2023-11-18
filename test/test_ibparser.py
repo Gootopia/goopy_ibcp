@@ -34,7 +34,7 @@ class Test_IBParser:
         """Verify the accounts passed from a valid JSON string with that info"""
         test_msg = Test_IBParser.TestMessages.clientrequest_user
         accounts, err = IBParser.get_accounts(test_msg)
-        assert err == Error.No_Error
+        assert err == Error.Ok
         assert "U1111111" in accounts
         assert "U2222222" in accounts
         return
@@ -68,7 +68,7 @@ class Test_IBParser:
         test_msg = Test_IBParser.TestMessages.clientrequest_trades
 
         trades, err = IBParser.get_trades(test_msg)
-        assert err == Error.No_Error
+        assert err == Error.Ok
         return
 
     # BELOW HERE ARE EXAMPLE JSON STRINGS (At the end for readability)

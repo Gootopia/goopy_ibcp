@@ -16,24 +16,23 @@ client_http.clientrequest_authentication_status()
 client_http.clientrequest_reauthenticate()
 
 # Example call to search by name or symbol
-secdef=client_http.clientrequest_search("ES")
-#print(secdef.json[0])
+secdef = client_http.clientrequest_search("ES")
+# print(secdef.json[0])
 
-conid="461318816"
+conid = "461318816"
 # Get a tick snapshot of instruments (HTTP-based)
 client_http.clientrequest_marketdata(conid)
 
-while True:
-    # Get historical data (HTTP-based)
-    client_http.clientrequest_marketdata(conid)
-    time.sleep(1)
-
+# while True:
+#    # Get historical data (HTTP-based)
+#    client_http.clientrequest_marketdata(conid)
+#    time.sleep(1)
 
 # Streaming data subscription (Websocket-based)
 client_ws = ClientPortalWebsocketsBase()
 
 try:
-# loop forever in the client. Normally you do this in a worker thread as it runs perpetually to process messages
+    # loop forever in the client. Normally you do this in a worker thread as it runs perpetually to process messages
     client_ws.loop()
     print("Bye-Bye!")
 

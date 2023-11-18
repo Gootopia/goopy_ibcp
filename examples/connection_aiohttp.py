@@ -17,7 +17,7 @@ async def main_http():
     # r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
 
-    if r.error is Error.No_Error:
+    if r.error is Error.Ok:
         accounts, err = IBParser.get_accounts(r.json)
 
         r = await client_http.clientrequest_authentication_status()

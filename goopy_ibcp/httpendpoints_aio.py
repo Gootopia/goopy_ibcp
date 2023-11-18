@@ -114,7 +114,7 @@ class HttpEndpointsAio(Watchdog):
 
                     # Check returns. 200=good. Others indicate errors
                     if response.status == 200:
-                        result.error = Error.No_Error
+                        result.error = Error.Ok
 
                     elif response.status == 401:
                         result.error = Error.Err_Connection_Incomplete_WebRequest_401

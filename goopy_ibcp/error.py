@@ -9,7 +9,7 @@ class Error(Enum):
 
     # GENERAL ERROR MESSAGES
     Unhandled_Exception = -1
-    No_Error = 1
+    Ok = 1
     Invalid_URL = 2
     # Connection_or_Timeout = 3
 
