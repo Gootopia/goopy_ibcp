@@ -231,7 +231,7 @@ class ClientPortalWebsocketsBase:
             finally:
                 logger.log("DEBUG", f"Exited websocket heartbeat")
 
-    async def __websocket_reqdata(self):
+    async def __websocket_reqdata_example(self):
         # Subscribe to desired data feeds.
         # Short sleep to let things get connected...TBD needed? Better way?
         await asyncio.sleep(5)
@@ -261,16 +261,21 @@ class ClientPortalWebsocketsBase:
         logger.log("DEBUG", f"Exit ReqData")
 
     async def __async_loop(self):
-        # Kick off the various threads
+        # Start the infinite thread loop
         try:
             logger.log("DEBUG", f"Start Async Loop")
             ret = await self.__open_connection(url=self.url_ib_wss)
             if ret == ClientPortalWebsocketsError.Ok:
-                await asyncio.gather(
+                # Base method loops we always need
+                methods = [
                     self.__websocket_msg_handler(),
-                    self.__websocket_reqdata(),
                     self.__websocket_heartbeat(),
-                )
+                ]
+                # Can append additional methods as needed
+                methods.append(self.__websocket_reqdata_example())
+                # pass in desired list as arguments
+                await asyncio.gather(*methods)
+
         except Exception as e:
             logger.log("DEBUG", f"EXCEPTION: {e}")
 
