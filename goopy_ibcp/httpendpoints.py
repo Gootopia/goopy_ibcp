@@ -5,9 +5,9 @@ import urllib3
 from loguru import logger
 
 # from goopy_misc.watchdog import Watchdog
-from goopy_ibcp.watchdog import Watchdog
-from goopy_ibcp.error import Error
-from goopy_ibcp.resultrequest import RequestResult
+from watchdog import Watchdog
+from error import IBClientError
+from resultrequest import RequestResult
 
 
 class HttpEndpoints(Watchdog):
@@ -131,16 +131,16 @@ class HttpEndpoints(Watchdog):
         if resp is not None:
             # If Ok = False, there was a problem submitting the request, typically an invalid URL
             if not resp.ok:
-                result.error = Error.Invalid_URL
+                result.error = IBClientError.Invalid_URL
             else:
                 # conversion to give the request specific json results
                 result.json = resp.json()
                 result.statusCode = resp.status_code
         else:
-            result.error = Error.Connection_or_Timeout
+            result.error = IBClientError.Connection_or_Timeout
             logger.log("DEBUG", f"{exception}")
 
-        if result.error != Error.Ok:
+        if result.error != IBClientError.Ok:
             logger.log(
                 "DEBUG", f"{cpurl}: Error={result.error}, Status={result.statusCode}"
             )

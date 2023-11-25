@@ -1,7 +1,7 @@
 """IB Message: Tick."""
-from goopy_ibcp.ibmsg import IBMsgConverter
-from goopy_ibcp.ibmsg_topic import IBTopic
-from goopy_ibcp.ibfieldmapper import IBFieldMapper
+from ibmsg import IBMsgConverter
+from ibmsg_topic import IBTopic
+from ibfieldmapper import IBFieldMapper
 
 
 class IBMsgConverterTick(IBMsgConverter):

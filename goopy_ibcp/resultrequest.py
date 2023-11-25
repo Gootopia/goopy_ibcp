@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from goopy_ibcp.error import Error
+from error import IBClientError
 
 
 @dataclass
@@ -8,7 +8,7 @@ class RequestResult:
     # request origin
     url: str = ""
     # Decoded message for error
-    error = Error.Ok
+    error = IBClientError.Ok
     # Addition error info
     errorMsg = None
     # Client portal Web Error Code

@@ -1,6 +1,6 @@
 import pytest
 from goopy_ibcp.ibparser import IBParser
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 
 
 class Test_IBParser:
@@ -11,13 +11,13 @@ class Test_IBParser:
         not_json_string = "not_json"
 
         acct, err = IBParser.get_accounts(not_json_string)
-        assert err == Error.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_JSON_Invalid_Format
         assert acct is None
 
         bad_json_format = {"key"}
 
         acct, err = IBParser.get_accounts(bad_json_format)
-        assert err == Error.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_JSON_Invalid_Format
         assert acct is None
         return
 
@@ -26,7 +26,7 @@ class Test_IBParser:
         no_accounts = {"noaccountkey": "goodvalue"}
 
         acct, err = IBParser.get_accounts(no_accounts)
-        assert err == Error.Err_Account_No_Accounts_Key_Found
+        assert err == IBClientError.Err_Account_No_Accounts_Key_Found
         assert acct is None
         return
 
@@ -34,7 +34,7 @@ class Test_IBParser:
         """Verify the accounts passed from a valid JSON string with that info"""
         test_msg = Test_IBParser.TestMessages.clientrequest_user
         accounts, err = IBParser.get_accounts(test_msg)
-        assert err == Error.Ok
+        assert err == IBClientError.Ok
         assert "U1111111" in accounts
         assert "U2222222" in accounts
         return
@@ -44,13 +44,13 @@ class Test_IBParser:
         not_json_string = "not_json"
 
         acct, err = IBParser.get_trades(not_json_string)
-        assert err == Error.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_JSON_Invalid_Format
         assert acct is None
 
         bad_json_format = {"key"}
 
         acct, err = IBParser.get_trades(bad_json_format)
-        assert err == Error.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_JSON_Invalid_Format
         assert acct is None
         return
 
@@ -59,7 +59,7 @@ class Test_IBParser:
         no_accounts = {"noaccountkey": "goodvalue"}
 
         acct, err = IBParser.get_trades(no_accounts)
-        assert err == Error.Err_Trades_No_Trades_Found
+        assert err == IBClientError.Err_Trades_No_Trades_Found
         assert acct is None
         return
 
@@ -68,7 +68,7 @@ class Test_IBParser:
         test_msg = Test_IBParser.TestMessages.clientrequest_trades
 
         trades, err = IBParser.get_trades(test_msg)
-        assert err == Error.Ok
+        assert err == IBClientError.Ok
         return
 
     # BELOW HERE ARE EXAMPLE JSON STRINGS (At the end for readability)

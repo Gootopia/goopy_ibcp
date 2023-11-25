@@ -4,8 +4,8 @@ from enum import Enum, unique
 
 
 @unique
-class Error(Enum):
-    """Descriptive Error Strings"""
+class IBClientError(Enum):
+    """Descriptive IB Client Error Strings"""
 
     # GENERAL ERROR MESSAGES
     Unhandled_Exception = -1
@@ -34,6 +34,9 @@ class Error(Enum):
     # FLEXQUERY
     Err_FlexQuery_Invalid_Request = 500
     Err_FlexQuery_Key_Not_Found = 501
+
+    # MARKET DATA
+    Err_MarketData_Conid_Not_Integer = 600
 
 
 if __name__ == "__main__":

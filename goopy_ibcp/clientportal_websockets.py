@@ -1,4 +1,6 @@
 import asyncio
+import subprocess
+import sys
 import websockets
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
@@ -7,13 +9,13 @@ from loguru import logger
 from goopy_ibcp.zmq_publisher import ZmqPublisher
 
 # from goopy_certificate.certificate import Certificate, CertificateError
-from goopy_ibcp.ibfieldmapper import IBFieldMapper
-from goopy_ibcp.certificate import Certificate, CertificateError
-from goopy_ibcp.ibmsg_tick import IBMsgConverterTick
-from goopy_ibcp.ibmsg import IBMsgConverter
-from goopy_ibcp.jsonpacket import JSONPacket
-from goopy_ibcp.ibmsg_topic import IBTopic
-from goopy_ibcp.error import Error
+from ibfieldmapper import IBFieldMapper
+from certificate import Certificate, CertificateError
+from ibmsg_tick import IBMsgConverterTick
+from ibmsg import IBMsgConverter
+from jsonpacket import JSONPacket
+from ibmsg_topic import IBTopic
+from error import IBClientError
 
 
 class ClientPortalWebsocketsError(Enum):
@@ -98,19 +100,26 @@ class ClientPortalWebsocketsBase:
 
         return ticks_used
 
+    async def test_process(self):
+        for i in range(1, 10):
+            logger.log("DEBUG", f"Side Process: {i}")
+            await asyncio.sleep(5)
+
     def loop(self):
         """Start websocket message handler and heartbeat"""
+        logger.log("DEBUG", f"Entered websocket loop")
         try:
             with ThreadPoolExecutor() as executor:
                 executor.submit(
-                    asyncio.get_event_loop().run_until_complete(self.__async_loop())
+                    # asyncio.get_event_loop().run_until_complete(self.__async_loop()),
+                    asyncio.run(self.__async_loop())
                 )
 
         except Exception as e:
             logger.log("DEBUG", f"Exception:{e}")
 
         finally:
-            logger.log("DEBUG", f"Exited loop.")
+            logger.log("DEBUG", f"Exited websocket loop.")
 
     async def send(self, msg):
         """Websocket send. Automatic logging of transmitted data."""
@@ -125,6 +134,21 @@ class ClientPortalWebsocketsBase:
     def on_message(self, msg):
         """Websocket message received. Override as required."""
         pass
+
+    def subscribe_data(self, conid: str, ticks: list = [IBFieldMapper.Price_Last]):
+        """Subscribe to streaming websocket data for desired contract id
+        Return only desired ticks:
+        {conid} = Contract ID (see https://pennies.interactivebrokers.com/cstools/contract_info/v3.10/index.php)
+        {ticks} = List of desired ticks (See IBFieldmapper)"""
+        valid_ticks = ClientPortalWebsocketsBase._check_tick_types(ticks)
+
+        # User is responsible for making sure conid is valid but we'll do rudimentary check on format
+        if conid.isdigit is False:
+            return IBClientError.Err_MarketData_Conid_Not_Integer
+
+        if valid_ticks:
+            ws_str = ClientPortalWebsocketsBase._build_ws_str_smd(conid, valid_ticks)
+            ws_str = ws_str
 
     async def __open_connection(self, url="", url_validator=None):
         """Open a websocket connection"""
@@ -177,6 +201,7 @@ class ClientPortalWebsocketsBase:
             return ret_code
 
     async def __websocket_msg_handler(self):
+        """Process incoming IB messages. Will publish via ZMQ as appropriate (see init)"""
         logger.log("DEBUG", f"Start message handler")
 
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
@@ -195,12 +220,12 @@ class ClientPortalWebsocketsBase:
                         new_msg_topic, self.msg_handlers, msg_raw
                     )
 
-                    # Only transmit packets that were handled
+                    # Only publish packets to ZMQ that have been configured to do so (see class init)
                     if handled_msg_dict is not None:
                         new_json_packet = JSONPacket(new_msg_topic, handled_msg_dict)
                         xmit_msg = new_json_packet.build_packet()
                         self.publisher.publish_string(xmit_msg)
-                        logger.log("DEBUG", f"Publishing: {xmit_msg}")
+                        logger.log("DEBUG", f"ZMQ: {xmit_msg}")
 
             except websockets.ConnectionClosed:
                 logger.log("DEBUG", f"Connection closed. Re-opening...")
@@ -270,6 +295,7 @@ class ClientPortalWebsocketsBase:
                 methods = [
                     self.__websocket_msg_handler(),
                     self.__websocket_heartbeat(),
+                    self.test_process(),
                 ]
                 # Can append additional methods as needed
                 methods.append(self.__websocket_reqdata_example())
@@ -294,5 +320,6 @@ def main_ws() -> None:
 if __name__ == "__main__":
     # Example to start an infinite event loop which handles websocket messages
     # Refer to _async_loop for more details on specific threads
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main_ws())
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(main_ws())
+    asyncio.run(main_ws())

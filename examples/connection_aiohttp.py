@@ -4,7 +4,7 @@ from loguru import logger
 
 from goopy_ibcp.clientportal_http_aio import ClientPortalHttpAio
 from goopy_ibcp.ibparser import IBParser
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 from goopy_ibcp.environment_var import Environment_Var
 
 
@@ -17,7 +17,7 @@ async def main_http():
     # r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
 
-    if r.error is Error.Ok:
+    if r.error is IBClientError.Ok:
         accounts, err = IBParser.get_accounts(r.json)
 
         r = await client_http.clientrequest_authentication_status()

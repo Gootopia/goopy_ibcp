@@ -3,8 +3,8 @@
 Base message from which other messages are derived.
 """
 from abc import ABC, abstractclassmethod
-from goopy_ibcp.ibfieldmapper import IBFieldMapper
-from goopy_ibcp.jsonpacket import JSONPacket
+from ibfieldmapper import IBFieldMapper
+from jsonpacket import JSONPacket
 import json
 
 
