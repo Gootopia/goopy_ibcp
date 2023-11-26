@@ -11,13 +11,13 @@ class Test_IBParser:
         not_json_string = "not_json"
 
         acct, err = IBParser.get_accounts(not_json_string)
-        assert err == IBClientError.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_Json_Invalid_Format
         assert acct is None
 
         bad_json_format = {"key"}
 
         acct, err = IBParser.get_accounts(bad_json_format)
-        assert err == IBClientError.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_Json_Invalid_Format
         assert acct is None
         return
 
@@ -34,7 +34,7 @@ class Test_IBParser:
         """Verify the accounts passed from a valid JSON string with that info"""
         test_msg = Test_IBParser.TestMessages.clientrequest_user
         accounts, err = IBParser.get_accounts(test_msg)
-        assert err == IBClientError.Ok
+        assert err == IBClientError.Err_General_Ok
         assert "U1111111" in accounts
         assert "U2222222" in accounts
         return
@@ -44,13 +44,13 @@ class Test_IBParser:
         not_json_string = "not_json"
 
         acct, err = IBParser.get_trades(not_json_string)
-        assert err == IBClientError.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_Json_Invalid_Format
         assert acct is None
 
         bad_json_format = {"key"}
 
         acct, err = IBParser.get_trades(bad_json_format)
-        assert err == IBClientError.Err_JSON_Invalid_Format
+        assert err == IBClientError.Err_Json_Invalid_Format
         assert acct is None
         return
 
@@ -68,7 +68,7 @@ class Test_IBParser:
         test_msg = Test_IBParser.TestMessages.clientrequest_trades
 
         trades, err = IBParser.get_trades(test_msg)
-        assert err == IBClientError.Ok
+        assert err == IBClientError.Err_General_Ok
         return
 
     # BELOW HERE ARE EXAMPLE JSON STRINGS (At the end for readability)

@@ -131,7 +131,7 @@ class HttpEndpoints(Watchdog):
         if resp is not None:
             # If Ok = False, there was a problem submitting the request, typically an invalid URL
             if not resp.ok:
-                result.error = IBClientError.Invalid_URL
+                result.error = IBClientError.Err_General_Invalid_URL
             else:
                 # conversion to give the request specific json results
                 result.json = resp.json()
@@ -140,7 +140,7 @@ class HttpEndpoints(Watchdog):
             result.error = IBClientError.Connection_or_Timeout
             logger.log("DEBUG", f"{exception}")
 
-        if result.error != IBClientError.Ok:
+        if result.error != IBClientError.Err_General_Ok:
             logger.log(
                 "DEBUG", f"{cpurl}: Error={result.error}, Status={result.statusCode}"
             )

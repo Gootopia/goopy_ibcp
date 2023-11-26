@@ -22,15 +22,15 @@ class IBParser:
             accounts = jsonstr[IBModels.User.Accounts]
 
         except TypeError as e:
-            return None, IBClientError.Err_JSON_Invalid_Format
+            return None, IBClientError.Err_Json_Invalid_Format
 
         except KeyError as e:
             return None, IBClientError.Err_Account_No_Accounts_Key_Found
 
         except Exception as e:
-            return None, IBClientError.Unhandled_Exception
+            return None, IBClientError.Err_General_Unhandled_Exception
 
-        return accounts, IBClientError.Ok
+        return accounts, IBClientError.Err_General_Ok
 
     @staticmethod
     def get_trades(jsonstr: str = None):
@@ -50,9 +50,9 @@ class IBParser:
                 return None, IBClientError.Err_Trades_No_Trades_Found
 
         except TypeError as e:
-            return None, IBClientError.Err_JSON_Invalid_Format
+            return None, IBClientError.Err_Json_Invalid_Format
 
         except Exception as e:
-            return None, IBClientError.Unhandled_Exception
+            return None, IBClientError.Err_General_Unhandled_Exception
 
-        return trades, IBClientError.Ok
+        return trades, IBClientError.Err_General_Ok

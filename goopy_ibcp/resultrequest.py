@@ -8,7 +8,7 @@ class RequestResult:
     # request origin
     url: str = ""
     # Decoded message for error
-    error = IBClientError.Ok
+    error = IBClientError.Err_General_Ok
     # Addition error info
     errorMsg = None
     # Client portal Web Error Code

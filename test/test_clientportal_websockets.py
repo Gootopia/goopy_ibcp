@@ -4,10 +4,8 @@ from unittest.mock import patch
 # from goopy_certificate.certificate import CertificateError, CertificateReturn
 from goopy_ibcp.certificate import CertificateError, CertificateReturn
 from goopy_ibcp.ibfieldmapper import IBFieldMapper
-from goopy_ibcp.clientportal_websockets import (
-    ClientPortalWebsocketsBase,
-    ClientPortalWebsocketsError,
-)
+from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
+from goopy_ibcp.error import IBClientError
 
 
 class TestClientPortalWebSocketsNotPatched:
@@ -22,14 +20,14 @@ class TestClientPortalWebSocketsNotPatched:
         result, smd_str = ClientPortalWebsocketsBase._build_ws_str_smd(
             conid, tick_types
         )
-        assert result == ClientPortalWebsocketsError.Ok
+        assert result == IBClientError.Err_General_Ok
         assert smd_str == good_str
 
     def test_build_smd_string_bad_conid(self):
         """Check that we pass only a numeral as conid"""
         conid = "bad"
         result = ClientPortalWebsocketsBase._build_ws_str_smd(conid, None)
-        assert result == ClientPortalWebsocketsError.Invalid_Conid
+        assert result == IBClientError.Err_MarketData_Conid_Invalid
 
     def test_tick_types_good(self):
         """Check that we ignore any unknown tick types"""
@@ -79,7 +77,7 @@ class TestClientPortalWebsocketsPatched:
         result = await cp.__open_connection(
             url_validator=TestClientPortalWebsockets.url_validator_invalid
         )
-        assert result == ClientPortalWebsocketsError.Invalid_URL
+        assert result == IBClientError.Err_General_Invalid_URL
 
     @pytest.mark.asyncio
     async def test_open_connection_invalid_certificate(self, patched):
@@ -88,11 +86,11 @@ class TestClientPortalWebsocketsPatched:
         )
         cp = ClientPortalWebsocketsBase()
         result = await cp.__open_connection()
-        assert result == ClientPortalWebsocketsError.Invalid_Certificate
+        assert result == IBClientError.Err_Websocket_Invalid_Certificate
 
     @pytest.mark.asyncio
     async def test_open_connection_failed(self, patched):
         patched.return_value = CertificateReturn(None, CertificateError.Ok)
         cp = ClientPortalWebsocketsBase()
         result = await cp.__open_connection()
-        assert result == ClientPortalWebsocketsError.Invalid_Certificate
+        assert result == IBClientError.Err_Websocket_Invalid_Certificate

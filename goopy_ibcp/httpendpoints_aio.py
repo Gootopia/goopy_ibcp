@@ -114,7 +114,7 @@ class HttpEndpointsAio(Watchdog):
 
                     # Check returns. 200=good. Others indicate errors
                     if response.status == 200:
-                        result.error = IBClientError.Ok
+                        result.error = IBClientError.Err_General_Ok
 
                     elif response.status == 401:
                         result.error = (

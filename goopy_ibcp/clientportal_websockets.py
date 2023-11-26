@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from loguru import logger
 
-from goopy_ibcp.zmq_publisher import ZmqPublisher
+from zmq_publisher import ZmqPublisher
 
 # from goopy_certificate.certificate import Certificate, CertificateError
 from ibfieldmapper import IBFieldMapper
@@ -18,15 +18,10 @@ from ibmsg_topic import IBTopic
 from error import IBClientError
 
 
-class ClientPortalWebsocketsError(Enum):
-    """Define client portal error messages."""
-
-    Ok = 0
-    Unknown = 1
-    Invalid_URL = 2
-    Invalid_Certificate = 3
-    Connection_Failed = 4
-    Invalid_Conid = 5
+class ClientPortalWebsocketConnectionStatus(Enum):
+    Not_Connected = 1
+    Waiting_For_Connection = 2
+    Connected = 3
 
 
 # TODO: Document ClientPortalWebsocketsBase class
@@ -41,6 +36,7 @@ class ClientPortalWebsocketsBase:
         # Base used by all IB websocket endpoints
         self.url_ib_wss = "wss://localhost:5000/v1/api/ws"
         self.connection = None
+        self.connection_state = ClientPortalWebsocketConnectionStatus.Not_Connected
         self.sslcontext = None
         self.msg_handlers = {}
         # default websocket 'tic' heartbeat message is 60 sec
@@ -64,13 +60,13 @@ class ClientPortalWebsocketsBase:
         """
         # conid are always an integer
         if conid.isdigit() is False:
-            return ClientPortalWebsocketsError.Invalid_Conid
+            return IBClientError.Err_MarketData_Conid_Invalid
 
         topic = f"smd+{conid}"
         fields = '{"fields":}' + str(f"{ticks}")
         ticks = ",".join([f'"{str(tick)}"' for tick in ticks])
         smd_string = f'{topic}+{{"fields":[{ticks}]}}'
-        return ClientPortalWebsocketsError.Ok, smd_string
+        return IBClientError.Err_General_Ok, smd_string
 
     @staticmethod
     def _check_tick_types(ticks_requested: list) -> list:
@@ -100,11 +96,6 @@ class ClientPortalWebsocketsBase:
 
         return ticks_used
 
-    async def test_process(self):
-        for i in range(1, 10):
-            logger.log("DEBUG", f"Side Process: {i}")
-            await asyncio.sleep(5)
-
     def loop(self):
         """Start websocket message handler and heartbeat"""
         logger.log("DEBUG", f"Entered websocket loop")
@@ -127,7 +118,7 @@ class ClientPortalWebsocketsBase:
             logger.log("DEBUG", f"{msg}")
             await self.connection.send(msg)
 
-    def on_connection(self, msg):
+    def on_connection(self):
         """Websocket connection opened. Override as required."""
         pass
 
@@ -150,98 +141,167 @@ class ClientPortalWebsocketsBase:
             ws_str = ClientPortalWebsocketsBase._build_ws_str_smd(conid, valid_ticks)
             ws_str = ws_str
 
-    async def __open_connection(self, url="", url_validator=None):
-        """Open a websocket connection"""
+    async def __open_connection(
+        self,
+        url="",
+        url_validator=None,
+        connection_max_attempts: int = 0,
+        retry_timeout_sec: int = 15,
+    ):
+        """Open a websocket connection
+        {url} = self explanatory
+        {url_validator} = method that can be used to check/coerce URL that is passed
+        {num_retries} = Number of retry attempts if connection fails (0 for infinite)
+        {retry_timeout_sec} = Seconds to wait between retries"""
         if url_validator is not None:
             if url_validator(url) is False:
-                return ClientPortalWebsocketsError.Invalid_URL
+                return IBClientError.Err_General_Invalid_URL
 
         try:
-            logger.log("DEBUG", f"Certificate: Acquiring")
+            logger.log("DEBUG", f"Acquiring certificate.")
             result = Certificate.get_certificate()
 
         except Exception as e:
             logger.log("DEBUG", f"EXCEPTION: {e}")
-            return ClientPortalWebsocketsError.Unknown
+            return IBClientError.Err_Websocket_Unhandled_Exception
 
         finally:
             if result.error != CertificateError.Ok:
                 logger.log(
                     "DEBUG",
-                    f"Certificate: Problems obtaining certificate: {result.error}",
+                    f"Problems obtaining certificate: {result.error}",
                 )
-                return ClientPortalWebsocketsError.Invalid_Certificate
+                return IBClientError.Err_Websocket_Invalid_Certificate
 
-        try:
-            logger.log("DEBUG", f'Connection: Opening "{url}"')
+        connection_attempts = 1
 
-            self.connection = await websockets.connect(url, ssl=result.ssl_context)
-            logger.log("DEBUG", f'Connection: Established "{url}"')
-            ret_code = ClientPortalWebsocketsError.Ok
+        while connection_attempts > connection_max_attempts:
+            try:
+                logger.log("DEBUG", f"Attempting connection to {url}")
+                self.connection = await websockets.connect(url, ssl=result.ssl_context)
 
-            # Once connection is achieved, IB provides confirmation message with username
-            connect_msg = await self.connection.recv()
-            logger.log("DEBUG", f"Connection: Confirmation {connect_msg}")
+                self.connection_state = ClientPortalWebsocketConnectionStatus.Connected
 
-            # additional external handling if overridden
-            self.on_connection(connect_msg)
+                # Once connection is achieved, IB provides confirmation message with username
+                # connect_msg = await self.connection.recv()
+                # logger.log("DEBUG", f"Received: {connect_msg}")
 
-            # save off this context for use by other handlers since it was used successfully already
-            self.sslcontext = result.ssl_context
+                # additional external handling if overridden
+                # self.on_connection(connect_msg)
 
-        except (websockets.WebSocketException, TimeoutError) as e:
-            logger.log("DEBUG", f"EXCEPTION: Websockets {e}")
-            ret_code = ClientPortalWebsocketsError.Connection_Failed
+                # save off this context for use by other handlers since it was used successfully already
+                self.sslcontext = result.ssl_context
 
-        except Exception as e:
-            logger.log("DEBUG", f"EXCEPTION: General exception: {e}")
-            ret_code = ClientPortalWebsocketsError.Unknown
+                # We can only get here if the connection succeeds, otherwise we process the resulting exception
+                logger.log("DEBUG", f"Connected to {url}.")
+                ret_val = IBClientError.Err_General_Ok
 
-        finally:
-            return ret_code
+            except (websockets.WebSocketException, TimeoutError) as e:
+                logger.log("DEBUG", f"EXCEPTION: Websockets {e}")
+                ret_val = IBClientError.Err_Websocket_Connection_Failed
+
+            except ConnectionRefusedError as e:
+                logger.log("DEBUG", f"EXCEPTION: Connection refused. Retrying {e}")
+                ret_val = IBClientError.Err_Websocket_Connection_Refused
+
+            except Exception as e:
+                logger.log("DEBUG", f"EXCEPTION: General exception: {e}")
+                ret_val = IBClientError.Err_Websocket_Unhandled_Exception
+
+            finally:
+                # On anything other than good connection, we retry until success or max attempts
+                if ret_val == IBClientError.Err_General_Ok:
+                    break
+                else:
+                    self.connection_state = (
+                        ClientPortalWebsocketConnectionStatus.Not_Connected
+                    )
+
+                    connection_attempts = connection_attempts + 1
+                    logger.log(
+                        "DEBUG",
+                        f"Connection attempt {connection_attempts} failed. Retry in {retry_timeout_sec}s.",
+                    )
+                    await asyncio.sleep(retry_timeout_sec)
+
+        # Return after maximum attempts
+        return ret_val
 
     async def __websocket_msg_handler(self):
         """Process incoming IB messages. Will publish via ZMQ as appropriate (see init)"""
-        logger.log("DEBUG", f"Start message handler")
+        logger.log("DEBUG", f"Starting message handler")
 
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
             try:
                 self.connection = ws
 
                 async for msg_raw in ws:
-                    logger.log("DEBUG", f"Received {msg_raw}")
+                    logger.log("DEBUG", f"Received from IB: {msg_raw}")
 
-                    # Don't know what message type is yet, so just use base and extract the topic
+                    # Don't know what message type is yet
                     new_msg_dict = IBMsgConverter.create_dict_from_raw_msg(msg_raw)
-                    new_msg_topic = new_msg_dict[IBTopic.Topic]
 
-                    # If a handler is available, we'll get a specific message dictionary returned to us
-                    handled_msg_dict = IBTopic.process_topic(
-                        new_msg_topic, self.msg_handlers, msg_raw
-                    )
+                    # IB delivers most messages as "topic" with a sub-field
+                    found_topic = IBTopic.Topic in new_msg_dict.keys()
+                    found_message = IBTopic.Message in new_msg_dict.keys()
 
-                    # Only publish packets to ZMQ that have been configured to do so (see class init)
-                    if handled_msg_dict is not None:
-                        new_json_packet = JSONPacket(new_msg_topic, handled_msg_dict)
-                        xmit_msg = new_json_packet.build_packet()
-                        self.publisher.publish_string(xmit_msg)
-                        logger.log("DEBUG", f"ZMQ: {xmit_msg}")
+                    if found_topic == True:
+                        new_msg_topic = new_msg_dict[IBTopic.Topic]
+
+                        # If a handler is available, we'll get a specific message dictionary returned to us
+                        handled_msg_dict = IBTopic.process_topic(
+                            new_msg_topic, self.msg_handlers, msg_raw
+                        )
+
+                        # Only publish packets to ZMQ that have been configured to do so (see class init)
+                        if handled_msg_dict is not None:
+                            new_json_packet = JSONPacket(
+                                new_msg_topic, handled_msg_dict
+                            )
+                            xmit_msg = new_json_packet.build_packet()
+                            self.publisher.publish_string(xmit_msg)
+                            logger.log("DEBUG", f"ZMQ Tx: {xmit_msg}")
+
+                    # This doesn't appear to be documented, but normally shows up while waiting for connection
+                    elif found_message == True and found_topic == False:
+                        new_msg: str = new_msg_dict[IBTopic.Message]
+                        logger.log("DEBUG", f"Non-topic message: '{new_msg}'")
+
+                        found_msg = new_msg.find("waiting for session")
+                        # It is expected that we receive the "waiting for session". If so, ignore
+                        if found_msg == 0:
+                            pass
+
+                        else:
+                            logger.log(
+                                "DEBUG", f"Unknown message received: '{new_msg}'"
+                            )
 
             except websockets.ConnectionClosed:
-                logger.log("DEBUG", f"Connection closed. Re-opening...")
-                continue
+                logger.log("DEBUG", f"Connection closed.")
+                ret_val = IBClientError.Err_Websocket_Connection_Closed
+
+            except KeyError as e:
+                logger.log("DEBUG", f"Missing Key: {e}")
+                ret_val = IBClientError.Err_Websocket_Missing_Key
 
             except Exception as e:
                 logger.log("DEBUG", f"EXCEPTION: {e}")
+                ret_val = IBClientError.Err_Websocket_Unhandled_Exception
 
             finally:
-                pass
+                if ret_val != IBClientError.Err_General_Ok:
+                    self.connection_state = (
+                        ClientPortalWebsocketConnectionStatus.Not_Connected
+                    )
 
-        logger.log("DEBUG", f"Exited message handler. Restarting.")
+                logger.log("DEBUG", f"Exited message handler.")
+
+            return ret_val
 
     async def __websocket_heartbeat(self):
         if self.connection is not None:
-            logger.log("DEBUG", f"Start heartbeat")
+            logger.log("DEBUG", f"Start heartbeat every {self.heartbeat_sec}")
 
             try:
                 while True:
@@ -250,11 +310,23 @@ class ClientPortalWebsocketsBase:
                     logger.log("DEBUG", f"Send Heartbeat {self.heartbeat_sec}s")
                     await asyncio.sleep(self.heartbeat_sec)
 
+            except websockets.ConnectionClosedError:
+                logger.log("DEBUG", f"Connection closed.")
+                ret_val = IBClientError.Err_Websocket_Connection_Closed
+
             except Exception as e:
                 logger.log("DEBUG", f"EXCEPTION: {e}")
+                ret_val = IBClientError.Err_Websocket_Unhandled_Exception
 
             finally:
+                if ret_val != IBClientError.Err_General_Ok:
+                    self.connection_state = (
+                        ClientPortalWebsocketConnectionStatus.Not_Connected
+                    )
+
                 logger.log("DEBUG", f"Exited websocket heartbeat")
+
+            return ret_val
 
     async def __websocket_reqdata_example(self):
         # Subscribe to desired data feeds.
@@ -272,7 +344,7 @@ class ClientPortalWebsocketsBase:
 
         # Example request just to get a tick stream started
         result, ws_str = self._build_ws_str_smd(conid, ticks)
-        if result == ClientPortalWebsocketsError.Ok:
+        if result == IBClientError.Err_General_Ok:
             await self.send(ws_str)
             logger.log("DEBUG", f"Sent streaming data request")
         else:
@@ -285,28 +357,46 @@ class ClientPortalWebsocketsBase:
         # logger.log("DEBUG", f"Sent historical data request")
         logger.log("DEBUG", f"Exit ReqData")
 
-    async def __async_loop(self):
+    async def __async_loop(self, restart_async_loop: bool = True):
+        """Asyncio loop to handle heartbeat, and messages from IB client.
+        {restart_async_loop} = Restart loop if connection is closed."""
         # Start the infinite thread loop
-        try:
-            logger.log("DEBUG", f"Start Async Loop")
-            ret = await self.__open_connection(url=self.url_ib_wss)
-            if ret == ClientPortalWebsocketsError.Ok:
-                # Base method loops we always need
-                methods = [
-                    self.__websocket_msg_handler(),
-                    self.__websocket_heartbeat(),
-                    self.test_process(),
-                ]
-                # Can append additional methods as needed
-                methods.append(self.__websocket_reqdata_example())
-                # pass in desired list as arguments
-                await asyncio.gather(*methods)
+        # If we exit the loop for some reason, these will be returned to caller
+        asyncio_gather_results = None
 
-        except Exception as e:
-            logger.log("DEBUG", f"EXCEPTION: {e}")
+        while restart_async_loop == True:
+            try:
+                logger.log("DEBUG", f"Starting Asyncio Loop")
 
-        finally:
-            logger.log("DEBUG", f"Exited Async Loop")
+                ret_val = await self.__open_connection(url=self.url_ib_wss)
+
+                if ret_val == IBClientError.Err_General_Ok:
+                    # Base method loops we always need
+                    methods = [
+                        self.__websocket_msg_handler(),
+                        self.__websocket_heartbeat(),
+                    ]
+
+                    # Can append additional methods as needed
+                    methods.append(self.__websocket_reqdata_example())
+
+                    # pass in desired list as arguments
+                    asyncio_gather_results = await asyncio.gather(*methods)
+
+                    if (
+                        IBClientError.Err_Websocket_Connection_Closed
+                        in asyncio_gather_results
+                    ):
+                        logger.log("DEBUG", "Connection closed. Restarting.")
+
+            except Exception as e:
+                logger.log("DEBUG", f"EXCEPTION: {e}")
+                # TODO: Identify any exceptions that get here. Until then, exit without restart
+                restart_async_loop = False
+
+            finally:
+                if restart_async_loop != True:
+                    logger.log("DEBUG", f"Exited Async Loop")
 
 
 @logger.catch

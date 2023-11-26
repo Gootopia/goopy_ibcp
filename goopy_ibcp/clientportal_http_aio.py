@@ -200,7 +200,7 @@ class ClientPortalHttpAio(HttpEndpointsAio):
 
         except Exception as e:
             logger.log("DEBUG", f"Exception during FlexQuery: {e}")
-            r.error = IBClientError.Unhandled_Exception
+            r.error = IBClientError.Err_General_Unhandled_Exception
 
         return r
 
