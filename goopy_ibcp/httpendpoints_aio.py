@@ -7,9 +7,9 @@ import xmltodict
 from loguru import logger
 
 # from goopy_misc.watchdog import Watchdog
-from watchdog import Watchdog
-from error import IBClientError
-from resultrequest import RequestResult
+from goopy_ibcp.watchdog import Watchdog
+from goopy_ibcp.error import IBClientError
+from goopy_ibcp.resultrequest import RequestResult
 
 
 class HttpEndpointsAio(Watchdog):

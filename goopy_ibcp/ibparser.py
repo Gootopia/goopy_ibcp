@@ -2,10 +2,11 @@
 
 Parse JSON structures returned by ClientPortal to extract desired items (trades, accounts, etc.)
 """
+
 import json
 
-from ibmodels import IBModels
-from error import IBClientError
+from goopy_ibcp.ibmodels import IBModels
+from goopy_ibcp.error import IBClientError
 
 
 class IBParser:

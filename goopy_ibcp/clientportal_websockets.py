@@ -34,7 +34,13 @@ class ClientPortalWebsocketsBase:
 
     def __init__(self):
         # Base used by all IB websocket endpoints
+
+        # This is the normal "non-Docker" use-case
         self.url_ib_wss = "wss://localhost:5000/v1/api/ws"
+
+        # When containerized, you have to call the IP (or hostname if it's set up properly) of the Ibeam container
+        # self.url_ib_wss = "wss://172.17.0.2:5000/v1/api/ws"
+
         self.connection = None
         self.connection_state = ClientPortalWebsocketConnectionStatus.Not_Connected
         self.sslcontext = None
@@ -42,16 +48,19 @@ class ClientPortalWebsocketsBase:
         # default websocket 'tic' heartbeat message is 60 sec
         self.heartbeat_sec = 60
         self.data_subscribers = []
+
+        # Used to publish data to other clients
         self.publisher = ZmqPublisher()
+
         logger.log(
             "DEBUG",
             f"Clientportal (Websockets) Started with endpoint: {self.url_ib_wss}",
         )
 
         # Message converters we want to handle. Other messages will be discarded when received.
-        self.msg_handlers[
-            IBTopic.MarketData
-        ] = IBMsgConverterTick.create_dict_from_raw_msg
+        self.msg_handlers[IBTopic.MarketData] = (
+            IBMsgConverterTick.create_dict_from_raw_msg
+        )
 
     @staticmethod
     def _build_ws_str_smd(conid: str, ticks: list) -> str:
@@ -234,6 +243,7 @@ class ClientPortalWebsocketsBase:
         async for ws in websockets.connect(self.url_ib_wss, ssl=self.sslcontext):
             try:
                 self.connection = ws
+                ret_val = IBClientError.Err_General_Ok
 
                 async for msg_raw in ws:
                     logger.log("DEBUG", f"Received from IB: {msg_raw}")
@@ -267,12 +277,9 @@ class ClientPortalWebsocketsBase:
                         new_msg: str = new_msg_dict[IBTopic.Message]
                         logger.log("DEBUG", f"Non-topic message: '{new_msg}'")
 
-                        found_msg = new_msg.find("waiting for session")
+                        found_wait_for_session_msg = new_msg.find("waiting for session")
                         # It is expected that we receive the "waiting for session". If so, ignore
-                        if found_msg == 0:
-                            pass
-
-                        else:
+                        if found_wait_for_session_msg != 0:
                             logger.log(
                                 "DEBUG", f"Unknown message received: '{new_msg}'"
                             )
@@ -302,6 +309,8 @@ class ClientPortalWebsocketsBase:
     async def __websocket_heartbeat(self):
         if self.connection is not None:
             logger.log("DEBUG", f"Start heartbeat every {self.heartbeat_sec}")
+
+            ret_val = IBClientError.Err_General_Ok
 
             try:
                 while True:
@@ -339,7 +348,7 @@ class ClientPortalWebsocketsBase:
         # Refer to https://misc.interactivebrokers.com/cstools/contract_info/v3.10/index.php?action=Conid
         # NOTE: If you are logged into the main account, the paper account will not transmit quote data
         # You can usually tell this if you subscribe and get one updated message but no quote data
-        conid = "586139726"
+        conid = "654503314"
         ticks = [IBFieldMapper.Price_Last]
 
         # Example request just to get a tick stream started
@@ -412,4 +421,5 @@ if __name__ == "__main__":
     # Refer to _async_loop for more details on specific threads
     # loop = asyncio.get_event_loop()
     # loop.run_until_complete(main_ws())
+    print(f"==== Starting {__file__}:{__name__} ====")
     asyncio.run(main_ws())

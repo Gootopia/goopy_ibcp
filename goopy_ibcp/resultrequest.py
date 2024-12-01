@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from error import IBClientError
+from goopy_ibcp.error import IBClientError
 
 
 @dataclass

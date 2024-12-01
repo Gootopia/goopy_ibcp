@@ -3,11 +3,11 @@ from overrides import overrides
 from loguru import logger
 
 
-from endpoints import Endpoints
-from error import IBClientError
-from httpendpoints_aio import HttpEndpointsAio
-from environment_var import Environment_Var
-from ibflexquery3 import IBFlexQuery3
+from goopy_ibcp.endpoints import Endpoints
+from goopy_ibcp.error import IBClientError
+from goopy_ibcp.httpendpoints_aio import HttpEndpointsAio
+from goopy_ibcp.environment_var import Environment_Var
+from goopy_ibcp.ibflexquery3 import IBFlexQuery3
 
 
 class ClientPortalHttpAio(HttpEndpointsAio):

@@ -1,6 +1,7 @@
 """
 Simple example test script for connecting and subscribing to data
 """
+
 from goopy_ibcp.clientportal_http import ClientPortalHttp
 from goopy_ibcp.clientportal_websockets import ClientPortalWebsocketsBase
 import time
@@ -16,10 +17,10 @@ client_http.clientrequest_authentication_status()
 client_http.clientrequest_reauthenticate()
 
 # Example call to search by name or symbol
-secdef = client_http.clientrequest_search("ES")
+secdef = client_http.clientrequest_search("MES")
 # print(secdef.json[0])
 
-conid = "461318816"
+conid = "654503314"
 # Get a tick snapshot of instruments (HTTP-based)
 client_http.clientrequest_marketdata(conid)
 

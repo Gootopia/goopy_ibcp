@@ -33,8 +33,8 @@ async def main_http():
         await asyncio.sleep(5)
 
         while True:
-            await client_http.clientrequest_marketdata("495512572", "31")
-            await client_http.clientrequest_validate()
+            r = await client_http.clientrequest_marketdata("265598", "31")
+            r = await client_http.clientrequest_validate()
             await asyncio.sleep(5)
 
 
