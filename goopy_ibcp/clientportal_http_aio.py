@@ -4,7 +4,7 @@ from loguru import logger
 
 
 from goopy_ibcp.endpoints import Endpoints
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 from goopy_ibcp.httpendpoints_aio import HttpEndpointsAio
 from goopy_ibcp.environment_var import Environment_Var
 from goopy_ibcp.ibflexquery3 import IBFlexQuery3
@@ -166,7 +166,7 @@ class ClientPortalHttpAio(HttpEndpointsAio):
             if IBFlexQuery3.XMLFields.Status not in r_xml:
                 code = r_xml[IBFlexQuery3.XMLFields.NonVersion3Error]
                 logger.log("DEBUG", f"Flex Query Error: '{code}'")
-                r.error = Error.Err_FlexQuery_Invalid_Request
+                r.error = IBClientError.Err_FlexQuery_Invalid_Request
 
             else:
                 status = r_xml[IBFlexQuery3.XMLFields.Status]
@@ -196,11 +196,11 @@ class ClientPortalHttpAio(HttpEndpointsAio):
 
         except KeyError as e:
             logger.log("DEBUG", f"Unknown FlexQuery key: '{e.args[0]}'")
-            r.error = Error.Err_FlexQuery_Key_Not_Found
+            r.error = IBClientError.Err_FlexQuery_Key_Not_Found
 
         except Exception as e:
             logger.log("DEBUG", f"Exception during FlexQuery: {e}")
-            r.error = Error.Unhandled_Exception
+            r.error = IBClientError.Err_General_Unhandled_Exception
 
         return r
 

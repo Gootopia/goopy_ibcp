@@ -4,17 +4,16 @@ from enum import Enum, unique
 
 
 @unique
-class Error(Enum):
-    """Descriptive Error Strings"""
+class IBClientError(Enum):
+    """Descriptive IB Client Error Strings"""
 
     # GENERAL ERROR MESSAGES
-    Unhandled_Exception = -1
-    No_Error = 1
-    Invalid_URL = 2
-    # Connection_or_Timeout = 3
+    Err_General_Unhandled_Exception = -1
+    Err_General_Ok = 1
+    Err_General_Invalid_URL = 2
 
     # JSON ISSUES
-    Err_JSON_Invalid_Format = 100
+    Err_Json_Invalid_Format = 100
 
     # ACCOUNT ISSUES
     Err_Account_No_Accounts_Key_Found = 200
@@ -34,6 +33,18 @@ class Error(Enum):
     # FLEXQUERY
     Err_FlexQuery_Invalid_Request = 500
     Err_FlexQuery_Key_Not_Found = 501
+
+    # MARKET DATA
+    Err_MarketData_Conid_Not_Integer = 600
+    Err_MarketData_Conid_Invalid = 601
+
+    # WEBSOCKET
+    Err_Websocket_Unhandled_Exception = 700
+    Err_Websocket_Invalid_Certificate = 701
+    Err_Websocket_Connection_Failed = 702
+    Err_Websocket_Connection_Refused = 703
+    Err_Websocket_Connection_Closed = 704
+    Err_Websocket_Missing_Key = 705
 
 
 if __name__ == "__main__":

@@ -7,10 +7,15 @@ class IBTopic:
     """
 
     Topic: str = "topic"
-    # Marketdata arrives from IB via "smd+{conid} topics"
-    MarketData: str = "smd"
     System: str = "system"
     Bulletin: str = "blt"
+
+    # Marketdata arrives from IB via "smd+{conid} topics"
+    MarketData: str = "smd"
+
+    # Typically shows up while connection is being established
+    # Typical payload is "waiting for session", but there probably could be others
+    Message: str = "message"
 
     @classmethod
     def process_topic(

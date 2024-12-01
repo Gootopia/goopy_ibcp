@@ -8,7 +8,7 @@ from loguru import logger
 
 # from goopy_misc.watchdog import Watchdog
 from goopy_ibcp.watchdog import Watchdog
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 from goopy_ibcp.resultrequest import RequestResult
 
 
@@ -114,16 +114,20 @@ class HttpEndpointsAio(Watchdog):
 
                     # Check returns. 200=good. Others indicate errors
                     if response.status == 200:
-                        result.error = Error.No_Error
+                        result.error = IBClientError.Err_General_Ok
 
                     elif response.status == 401:
-                        result.error = Error.Err_Connection_Incomplete_WebRequest_401
+                        result.error = (
+                            IBClientError.Err_Connection_Incomplete_WebRequest_401
+                        )
 
                     elif response.status == 403:
-                        result.error = Error.Err_Connection_Unauthorized_Web_Request_403
+                        result.error = (
+                            IBClientError.Err_Connection_Unauthorized_Web_Request_403
+                        )
 
                     else:
-                        result.error = Error.Err_Connection_Unhandled_Web_Error
+                        result.error = IBClientError.Err_Connection_Unhandled_Web_Error
                     logger.log("DEBUG", f"RESPONSE ({response.status}): {result.json}")
                     logger.log(
                         "DEBUG",
@@ -146,7 +150,7 @@ class HttpEndpointsAio(Watchdog):
             logger.log(
                 "DEBUG", f"Can't connect to ClientPortal. Verify Gateway is running!"
             )
-            result.error = Error.Err_Connection_No_Gateway
+            result.error = IBClientError.Err_Connection_No_Gateway
 
         # Log all received exceptions. We may handle other specific ones as they arise
         except Exception as e:

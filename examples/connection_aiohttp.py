@@ -4,7 +4,7 @@ from loguru import logger
 
 from goopy_ibcp.clientportal_http_aio import ClientPortalHttpAio
 from goopy_ibcp.ibparser import IBParser
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 from goopy_ibcp.environment_var import Environment_Var
 
 
@@ -13,12 +13,11 @@ async def main_http():
     logger.add("testlog.log")
     client_http = ClientPortalHttpAio(watchdog_start=False)
 
-    # These are flex queries...need to have a token working for them to function properly!
     # r = await client_http.clientrequest_flexquery_request(queryid="873489")
     # r = await client_http.clientrequest_flexquery_request(queryid="873480")
     r = await client_http.clientrequest_user()
 
-    if r.error is Error.No_Error:
+    if r.error is IBClientError.Err_General_Ok:
         accounts, err = IBParser.get_accounts(r.json)
 
         r = await client_http.clientrequest_authentication_status()
@@ -34,8 +33,8 @@ async def main_http():
         await asyncio.sleep(5)
 
         while True:
-            await client_http.clientrequest_marketdata("495512572", "31")
-            await client_http.clientrequest_validate()
+            r = await client_http.clientrequest_marketdata("265598", "31")
+            r = await client_http.clientrequest_validate()
             await asyncio.sleep(5)
 
 

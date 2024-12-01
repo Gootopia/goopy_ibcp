@@ -2,10 +2,11 @@
 
 Parse JSON structures returned by ClientPortal to extract desired items (trades, accounts, etc.)
 """
+
 import json
 
 from goopy_ibcp.ibmodels import IBModels
-from goopy_ibcp.error import Error
+from goopy_ibcp.error import IBClientError
 
 
 class IBParser:
@@ -22,15 +23,15 @@ class IBParser:
             accounts = jsonstr[IBModels.User.Accounts]
 
         except TypeError as e:
-            return None, Error.Err_JSON_Invalid_Format
+            return None, IBClientError.Err_Json_Invalid_Format
 
         except KeyError as e:
-            return None, Error.Err_Account_No_Accounts_Key_Found
+            return None, IBClientError.Err_Account_No_Accounts_Key_Found
 
         except Exception as e:
-            return None, Error.Unhandled_Exception
+            return None, IBClientError.Err_General_Unhandled_Exception
 
-        return accounts, Error.No_Error
+        return accounts, IBClientError.Err_General_Ok
 
     @staticmethod
     def get_trades(jsonstr: str = None):
@@ -47,12 +48,12 @@ class IBParser:
                     trades.insert(0, trade)
 
             if len(trades) == 0:
-                return None, Error.Err_Trades_No_Trades_Found
+                return None, IBClientError.Err_Trades_No_Trades_Found
 
         except TypeError as e:
-            return None, Error.Err_JSON_Invalid_Format
+            return None, IBClientError.Err_Json_Invalid_Format
 
         except Exception as e:
-            return None, Error.Unhandled_Exception
+            return None, IBClientError.Err_General_Unhandled_Exception
 
-        return trades, Error.No_Error
+        return trades, IBClientError.Err_General_Ok

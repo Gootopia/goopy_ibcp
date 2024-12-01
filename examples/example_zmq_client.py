@@ -17,7 +17,7 @@ socket_name_ib = "interactive_brokers"
 
 def recv_callback(msg):
     """This Handler method called every time something is received."""
-    print(f"message={msg}")
+    logger.log("INFO", f"message={msg._result}")
 
 
 def msg_client():
@@ -38,4 +38,5 @@ def msg_client():
 
 
 if __name__ == "__main__":
+    print("=== STARTING IB ZMQ CLIENT ===")
     msg_client()
